@@ -1,0 +1,3119 @@
+%PDF-1.4
+%‚„œ”
+1 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+2 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>
+endobj
+4 0 obj
+<< /Length 3715 >>
+stream
+BT
+/F1 9 Tf
+1 0 0 1 48 24 Tm
+(Academic Kechafa Deployment Guide - Page 1 of 14) Tj
+ET
+BT
+/F2 22 Tf
+1 0 0 1 116 778 Tm
+(Academic Kechafa Deployment Guide) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 740 Tm
+(This guide was written after scanning the current repository. It is tailored to this) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 726 Tm
+(project, not a generic Flask template.) Tj
+ET
+BT
+/F2 16 Tf
+1 0 0 1 48 700 Tm
+(1. What I Found In Your Project) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 676 Tm
+(Current stack in this repo:) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 658 Tm
+(- Flask 3 with an app factory in kechafa_app/__init__.py) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 642 Tm
+(- Session-based authentication in routes/auth.py) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 626 Tm
+(- SQLite database logic hard-wired in database.py) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 610 Tm
+(- A partially prepared SQLAlchemy model layer in models.py) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 594 Tm
+(- File uploads stored locally under static/uploads/) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 578 Tm
+(- AI integration controlled by environment variables in kechafa_app/config.py) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 562 Tm
+(- Docker files present, but production still starts with python app.py) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 546 Tm
+(Important reality:) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 528 Tm
+(- You can deploy this project quickly on Render for a demo.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 512 Tm
+(- You cannot get a truly professional, scalable deployment with the current database and) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 498 Tm
+(media setup until you move away from SQLite and local file storage.) Tj
+ET
+BT
+/F2 16 Tf
+1 0 0 1 48 474 Tm
+(2. Biggest Risks To Fix Before Production) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 450 Tm
+(These are the main issues I found during the scan:) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 432 Tm
+(1. database.py uses Python sqlite3 directly, so DATABASE_URL alone will not switch the) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 418 Tm
+(app to PostgreSQL.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 402 Tm
+(2. Uploaded files are saved in static/uploads/, which is not the right long-term place) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 388 Tm
+(for production video and book storage.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 372 Tm
+(3. The current Dockerfile starts the development server with python app.py instead of) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 358 Tm
+(Gunicorn.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 342 Tm
+(4. A real .env file exists in the repo. Any real API keys or secrets in git should be) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 328 Tm
+(rotated immediately and kept out of version control.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 312 Tm
+(5. The repo contains venv/ and backup virtual environment files. Those should never be) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 298 Tm
+(pushed to GitHub for deployment.) Tj
+ET
+BT
+/F2 16 Tf
+1 0 0 1 48 274 Tm
+(3. Recommended Production Architecture) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 250 Tm
+(Use this target architecture for a real-world app:) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 230 Tm
+(Users) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 218 Tm
+(  |) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 206 Tm
+(  v) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 194 Tm
+(Custom Domain + HTTPS) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 182 Tm
+(  |) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 170 Tm
+(  v) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 158 Tm
+(Render Web Service) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 146 Tm
+(  |) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 134 Tm
+(  +--> Gunicorn) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 122 Tm
+(  +--> Flask App) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 110 Tm
+(  |) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 98 Tm
+(  +--> PostgreSQL) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 86 Tm
+(  +--> Cloudinary or AWS S3 for media) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 74 Tm
+(  +--> OpenRouter / OpenAI for AI features) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 62 Tm
+(  +--> Redis later for cache and background jobs) Tj
+ET
+
+endstream
+endobj
+5 0 obj
+<< /Length 3294 >>
+stream
+BT
+/F1 9 Tf
+1 0 0 1 48 24 Tm
+(Academic Kechafa Deployment Guide - Page 2 of 14) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 788 Tm
+(Simple explanation:) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 770 Tm
+(- Render runs your Flask app on the internet.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 754 Tm
+(- Gunicorn serves Flask in production.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 738 Tm
+(- PostgreSQL stores users, courses, messages, books, and progress.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 722 Tm
+(- Cloudinary or S3 stores videos, PDFs, and images.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 706 Tm
+(- HTTPS protects logins and sessions.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 690 Tm
+(- A custom domain makes the app look professional.) Tj
+ET
+BT
+/F2 16 Tf
+1 0 0 1 48 666 Tm
+(4. Best Deployment Strategy For This Repo) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 642 Tm
+(I recommend a two-phase approach:) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 48 620 Tm
+(Phase A: Deploy Fast) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 600 Tm
+(Use Render with the current Flask app, Gunicorn, and either:) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 582 Tm
+(- temporary SQLite on a persistent disk for testing and demos, or) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 566 Tm
+(- PostgreSQL only after you complete the database refactor) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 48 546 Tm
+(Phase B: Deploy Professionally) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 526 Tm
+(Upgrade the app to:) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 508 Tm
+(- PostgreSQL) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 492 Tm
+(- cloud media storage) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 476 Tm
+(- cleaned requirements) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 460 Tm
+(- better secret management) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 444 Tm
+(- background jobs for heavy tasks) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 428 Tm
+(This is the right path if you want a professional AI-powered e-learning platform.) Tj
+ET
+BT
+/F2 16 Tf
+1 0 0 1 48 402 Tm
+(5. Clean The Repo Before Deployment) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 378 Tm
+(Before pushing to GitHub, clean these items:) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 360 Tm
+(1. Make sure .env is ignored and remove any real secrets from git history if they were) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 346 Tm
+(committed.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 330 Tm
+(2. Do not push venv/ or venv_broken_backup/.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 314 Tm
+(3. Do not rely on kechafa.db inside the repo for production.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 298 Tm
+(4. Do not rely on static/uploads/ for long-term media.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 282 Tm
+(5. Keep only source code, templates, static UI assets, docs, and tests in git.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 266 Tm
+(Useful commands:) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 246 Tm
+(git status) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 234 Tm
+(git rm -r --cached venv venv_broken_backup) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 222 Tm
+(git rm --cached .env) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 206 Tm
+(If secrets were ever committed:) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 186 Tm
+(Rotate them first, then clean git history if needed.) Tj
+ET
+BT
+/F2 16 Tf
+1 0 0 1 48 162 Tm
+(6. Production-Friendly Project Structure) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 138 Tm
+(Keep your project like this:) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 118 Tm
+(ELearning/) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 106 Tm
+(|- app.py) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 94 Tm
+(|- wsgi.py) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 82 Tm
+(|- requirements.txt) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 70 Tm
+(|- .env.example) Tj
+ET
+
+endstream
+endobj
+6 0 obj
+<< /Length 3334 >>
+stream
+BT
+/F1 9 Tf
+1 0 0 1 48 24 Tm
+(Academic Kechafa Deployment Guide - Page 3 of 14) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 788 Tm
+(|- render.yaml                # optional but recommended) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 776 Tm
+(|- Dockerfile) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 764 Tm
+(|- kechafa_app/) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 752 Tm
+(|- routes/) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 740 Tm
+(|- templates/) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 728 Tm
+(|- static/) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 716 Tm
+(|- docs/) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 704 Tm
+(|- tests/) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 688 Tm
+(Add a wsgi.py file for Gunicorn:) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 668 Tm
+(from kechafa_app import create_app) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 656 Tm
+( ) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 644 Tm
+(app = create_app\("production"\)) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 628 Tm
+(Why this helps:) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 610 Tm
+(- app.py stays for local development.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 594 Tm
+(- wsgi.py becomes the stable production entrypoint.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 578 Tm
+(- Render and other hosts can run gunicorn wsgi:app.) Tj
+ET
+BT
+/F2 16 Tf
+1 0 0 1 48 554 Tm
+(7. How To Create A Good requirements.txt) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 530 Tm
+(Your current requirements.txt is close, but it mixes production and dev notes. For) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 516 Tm
+(deployment, keep a real production file and optionally a separate dev file.) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 48 494 Tm
+(Recommended production requirements example) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 472 Tm
+(Flask==3.0.3) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 460 Tm
+(Flask-SQLAlchemy==3.1.1) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 448 Tm
+(Flask-Login==0.6.3) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 436 Tm
+(Flask-Babel==4.0.0) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 424 Tm
+(Werkzeug==3.0.3) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 412 Tm
+(SQLAlchemy==2.0.31) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 400 Tm
+(openai==1.51.2) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 388 Tm
+(reportlab==4.2.2) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 376 Tm
+(arabic-reshaper==3.0.0) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 364 Tm
+(python-bidi==0.4.2) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 352 Tm
+(gunicorn==22.0.0) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 340 Tm
+(psycopg2-binary==2.9.9) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 328 Tm
+(Flask-Cors==5.0.0) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 316 Tm
+(cloudinary==1.40.0) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 48 296 Tm
+(Optional dev requirements) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 274 Tm
+(pytest==8.3.3) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 262 Tm
+(pytest-cov==5.0.0) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 250 Tm
+(flake8==7.1.1) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 238 Tm
+(Flask-Migrate==4.0.7) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 48 218 Tm
+(If you want to regenerate requirements) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 196 Tm
+(pip freeze > requirements.txt) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 180 Tm
+(For beginners, I recommend manually curating the file instead of blindly freezing) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 166 Tm
+(everything. This keeps deployment clean and avoids shipping local-only packages.) Tj
+ET
+BT
+/F2 16 Tf
+1 0 0 1 48 140 Tm
+(8. Environment Variables) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 116 Tm
+(Your app already reads environment variables from kechafa_app/config.py. That is good.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 98 Tm
+(For production, use environment variables in the hosting dashboard, not a real .env) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 84 Tm
+(committed to git.) Tj
+ET
+
+endstream
+endobj
+7 0 obj
+<< /Length 3184 >>
+stream
+BT
+/F1 9 Tf
+1 0 0 1 48 24 Tm
+(Academic Kechafa Deployment Guide - Page 4 of 14) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 48 788 Tm
+(Recommended production variables) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 766 Tm
+(FLASK_ENV=production) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 754 Tm
+(SECRET_KEY=your-long-random-secret) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 742 Tm
+(PREFERRED_URL_SCHEME=https) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 730 Tm
+(FORCE_HTTPS=true) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 718 Tm
+(TRUST_PROXY_HEADERS=true) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 706 Tm
+(DEFAULT_LANGUAGE=fr) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 694 Tm
+(MAX_CONTENT_LENGTH_MB=250) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 682 Tm
+( ) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 670 Tm
+(ENABLE_REAL_AI=false) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 658 Tm
+(OPENROUTER_API_KEY=) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 646 Tm
+(OPENROUTER_FALLBACK_API_KEY=) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 634 Tm
+(OPENROUTER_MODEL=openrouter/free) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 622 Tm
+(OPENROUTER_MAX_TOKENS=512) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 610 Tm
+(OPENROUTER_APP_URL=https://your-domain.com) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 598 Tm
+(OPENROUTER_APP_TITLE=Academic Kechafa) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 586 Tm
+( ) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 574 Tm
+(DATABASE_URL=postgresql://user:password@host:5432/dbname) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 562 Tm
+(KECHAFA_DB=/var/data/kechafa.db) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 546 Tm
+(Notes:) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 528 Tm
+(- Use DATABASE_URL only after the database layer is upgraded for PostgreSQL.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 512 Tm
+(- If you stay on SQLite temporarily on Render, set KECHAFA_DB to the mounted disk path.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 496 Tm
+(- Never store real secrets in the repo.) Tj
+ET
+BT
+/F2 16 Tf
+1 0 0 1 48 472 Tm
+(9. Use Gunicorn Instead Of Flask Run) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 448 Tm
+(Do not use:) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 428 Tm
+(python app.py) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 412 Tm
+(Use:) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 392 Tm
+(gunicorn wsgi:app) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 376 Tm
+(Recommended start command:) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 356 Tm
+(gunicorn wsgi:app --workers 2 --threads 4 --timeout 120) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 340 Tm
+(Why Gunicorn is better:) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 322 Tm
+(- It is designed for production.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 306 Tm
+(- It handles multiple workers.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 290 Tm
+(- It is more stable behind Render or Railway.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 274 Tm
+(- It avoids using Flask's development server on the public internet.) Tj
+ET
+BT
+/F2 16 Tf
+1 0 0 1 48 250 Tm
+(10. Step-By-Step Render Deployment) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 226 Tm
+(This is the easiest path for this project.) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 48 204 Tm
+(Step 1: Push the project to GitHub) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 182 Tm
+(git add .) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 170 Tm
+(git commit -m "Prepare app for deployment") Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 158 Tm
+(git push origin main) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 48 138 Tm
+(Step 2: Create a Render account) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 118 Tm
+(Go to:) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 98 Tm
+(https://render.com/) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 48 78 Tm
+(Step 3: Create a new Web Service) Tj
+ET
+
+endstream
+endobj
+8 0 obj
+<< /Length 2877 >>
+stream
+BT
+/F1 9 Tf
+1 0 0 1 48 24 Tm
+(Academic Kechafa Deployment Guide - Page 5 of 14) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 788 Tm
+(In Render:) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 770 Tm
+(1. Click New +) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 754 Tm
+(2. Choose Web Service) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 738 Tm
+(3. Connect your GitHub account) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 722 Tm
+(4. Select this repository) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 706 Tm
+(5. Choose the branch to deploy) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 48 686 Tm
+(Step 4: Set runtime information) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 666 Tm
+(Typical settings:) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 648 Tm
+(- Environment: Python) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 632 Tm
+(- Build Command: pip install -r requirements.txt) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 616 Tm
+(- Start Command: gunicorn wsgi:app --workers 2 --threads 4 --timeout 120) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 48 596 Tm
+(Step 5: Add environment variables) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 576 Tm
+(Add these in the Render dashboard:) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 556 Tm
+(FLASK_ENV=production) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 544 Tm
+(SECRET_KEY=your-secret-key) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 532 Tm
+(PREFERRED_URL_SCHEME=https) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 520 Tm
+(FORCE_HTTPS=true) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 508 Tm
+(TRUST_PROXY_HEADERS=true) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 496 Tm
+(MAX_CONTENT_LENGTH_MB=250) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 484 Tm
+(ENABLE_REAL_AI=false) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 468 Tm
+(If using SQLite temporarily:) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 448 Tm
+(KECHAFA_DB=/var/data/kechafa.db) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 432 Tm
+(If using PostgreSQL after migration:) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 412 Tm
+(DATABASE_URL=postgresql://...) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 48 392 Tm
+(Step 6: Deploy) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 372 Tm
+(Click deploy and watch the logs.) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 48 350 Tm
+(Step 7: Test the public URL) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 330 Tm
+(Test these routes:) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 312 Tm
+(- /) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 296 Tm
+(- /login) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 280 Tm
+(- /register) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 264 Tm
+(- /courses) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 248 Tm
+(- /library) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 232 Tm
+(- /messages) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 216 Tm
+(- /ai-coach) Tj
+ET
+BT
+/F2 16 Tf
+1 0 0 1 48 192 Tm
+(11. Quick Demo Deployment With SQLite) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 168 Tm
+(If your goal is to get online fast before the PostgreSQL refactor, do this:) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 150 Tm
+(1. Add wsgi.py) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 134 Tm
+(2. Add gunicorn to requirements.txt) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 118 Tm
+(3. Deploy on Render) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 102 Tm
+(4. Attach a persistent disk) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 86 Tm
+(5. Set KECHAFA_DB to the persistent disk path) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 70 Tm
+(Example:) Tj
+ET
+
+endstream
+endobj
+9 0 obj
+<< /Length 3276 >>
+stream
+BT
+/F1 9 Tf
+1 0 0 1 48 24 Tm
+(Academic Kechafa Deployment Guide - Page 6 of 14) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 788 Tm
+(KECHAFA_DB=/var/data/kechafa.db) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 772 Tm
+(This is acceptable for:) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 754 Tm
+(- demos) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 738 Tm
+(- portfolio projects) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 722 Tm
+(- small private testing) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 706 Tm
+(This is not ideal for:) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 688 Tm
+(- high traffic) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 672 Tm
+(- multi-instance scaling) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 656 Tm
+(- heavy concurrent writes) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 640 Tm
+(- long-term production) Tj
+ET
+BT
+/F2 16 Tf
+1 0 0 1 48 616 Tm
+(12. Professional Database Upgrade: SQLite To PostgreSQL) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 592 Tm
+(This is the most important production upgrade for your app.) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 48 570 Tm
+(Why SQLite is not enough) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 550 Tm
+(SQLite is good for local development and small demos, but not ideal for a real e-learning) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 536 Tm
+(platform because:) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 518 Tm
+(- writes can become a bottleneck) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 502 Tm
+(- scaling is limited) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 486 Tm
+(- backups and recovery are weaker) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 470 Tm
+(- multi-instance deployment is difficult) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 48 450 Tm
+(Important repo-specific warning) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 430 Tm
+(Your config already defines DATABASE_URL, but the running app still uses database.py with) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 416 Tm
+(sqlite3. That means this will not work yet:) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 396 Tm
+(DATABASE_URL=postgresql://...) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 380 Tm
+(You need a real migration step first.) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 48 358 Tm
+(Best migration path for this repo) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 338 Tm
+(The repo already contains models.py with Flask-SQLAlchemy. That is the cleanest bridge to) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 324 Tm
+(PostgreSQL.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 306 Tm
+(Recommended plan:) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 288 Tm
+(1. Wire models.py into app startup) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 272 Tm
+(2. Add Flask-Migrate) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 256 Tm
+(3. Move table creation away from raw sqlite3 startup) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 240 Tm
+(4. Migrate repositories and services from raw SQL helpers to SQLAlchemy or) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 226 Tm
+(PostgreSQL-safe queries) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 210 Tm
+(5. Create a managed PostgreSQL database on Render) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 194 Tm
+(6. Set DATABASE_URL in production) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 48 174 Tm
+(Example app initialization target) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 152 Tm
+(from kechafa_app import create_app) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 140 Tm
+(from models import init_models, db) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 128 Tm
+( ) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 116 Tm
+(app = create_app\("production"\)) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 104 Tm
+(init_models\(app\)) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 92 Tm
+( ) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 80 Tm
+(with app.app_context\(\):) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 68 Tm
+(    db.create_all\(\)) Tj
+ET
+
+endstream
+endobj
+10 0 obj
+<< /Length 3052 >>
+stream
+BT
+/F1 9 Tf
+1 0 0 1 48 24 Tm
+(Academic Kechafa Deployment Guide - Page 7 of 14) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 48 788 Tm
+(Add Flask-Migrate) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 766 Tm
+(pip install Flask-Migrate) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 750 Tm
+(Example:) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 730 Tm
+(from flask_migrate import Migrate) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 718 Tm
+(from models import db) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 706 Tm
+( ) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 694 Tm
+(migrate = Migrate\(\)) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 682 Tm
+( ) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 670 Tm
+(def init_extensions\(app\):) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 658 Tm
+(    db.init_app\(app\)) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 646 Tm
+(    migrate.init_app\(app, db\)) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 630 Tm
+(Then:) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 610 Tm
+(flask db init) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 598 Tm
+(flask db migrate -m "initial postgres schema") Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 586 Tm
+(flask db upgrade) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 48 566 Tm
+(Create PostgreSQL on Render) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 546 Tm
+(Create a managed PostgreSQL instance in Render, copy its internal or external connection) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 532 Tm
+(string, and save it as:) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 512 Tm
+(DATABASE_URL=postgresql://...) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 48 492 Tm
+(Final goal) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 472 Tm
+(After the refactor, your production app should use PostgreSQL for:) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 454 Tm
+(- users) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 438 Tm
+(- courses) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 422 Tm
+(- books) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 406 Tm
+(- lessons) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 390 Tm
+(- enrollments) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 374 Tm
+(- messages) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 358 Tm
+(- notifications) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 342 Tm
+(- AI conversation history) Tj
+ET
+BT
+/F2 16 Tf
+1 0 0 1 48 318 Tm
+(13. How To Connect Flask To PostgreSQL In Production) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 294 Tm
+(If you complete the SQLAlchemy migration, use:) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 274 Tm
+(app.config["SQLALCHEMY_DATABASE_URI"] = os.environ["DATABASE_URL"]) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 262 Tm
+(app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 246 Tm
+(If you keep a custom repository layer, make sure every connection reads from DATABASE_URL.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 232 Tm
+(Do not leave production logic hard-coded to:) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 212 Tm
+(sqlite3.connect\("kechafa.db"\)) Tj
+ET
+BT
+/F2 16 Tf
+1 0 0 1 48 188 Tm
+(14. Media Handling For Videos And PDF Books) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 164 Tm
+(This is your second major production upgrade.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 146 Tm
+(Right now, files are stored in:) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 128 Tm
+(- static/uploads/books/) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 112 Tm
+(- static/uploads/book-covers/) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 96 Tm
+(- static/uploads/content/) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 80 Tm
+(That is fine locally, but not the best choice on cloud hosting.) Tj
+ET
+
+endstream
+endobj
+11 0 obj
+<< /Length 3356 >>
+stream
+BT
+/F1 9 Tf
+1 0 0 1 48 24 Tm
+(Academic Kechafa Deployment Guide - Page 8 of 14) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 48 788 Tm
+(Best option for your app) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 768 Tm
+(Use:) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 750 Tm
+(- Cloudinary for images and videos) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 734 Tm
+(- AWS S3 for PDFs, books, and larger file storage) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 48 714 Tm
+(Easy rule) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 694 Tm
+(- Videos: Cloudinary) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 678 Tm
+(- PDFs and documents: AWS S3 or Cloudinary raw files) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 662 Tm
+(- Small images: Cloudinary) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 48 642 Tm
+(Cloudinary example in Flask) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 620 Tm
+(import cloudinary) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 608 Tm
+(import cloudinary.uploader) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 596 Tm
+( ) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 584 Tm
+(cloudinary.config\() Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 572 Tm
+(    cloud_name=os.environ["CLOUDINARY_CLOUD_NAME"],) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 560 Tm
+(    api_key=os.environ["CLOUDINARY_API_KEY"],) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 548 Tm
+(    api_secret=os.environ["CLOUDINARY_API_SECRET"],) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 536 Tm
+(    secure=True,) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 524 Tm
+(\)) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 512 Tm
+( ) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 500 Tm
+(result = cloudinary.uploader.upload\() Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 488 Tm
+(    file,) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 476 Tm
+(    resource_type="video",) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 464 Tm
+(    folder="academic-kechafa/lessons") Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 452 Tm
+(\)) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 440 Tm
+( ) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 428 Tm
+(video_url = result["secure_url"]) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 412 Tm
+(Then save video_url in the database instead of a local file path.) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 48 390 Tm
+(AWS S3 example in Flask) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 368 Tm
+(import boto3) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 356 Tm
+(from uuid import uuid4) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 344 Tm
+( ) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 332 Tm
+(s3 = boto3.client\() Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 320 Tm
+(    "s3",) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 308 Tm
+(    aws_access_key_id=os.environ["AWS_ACCESS_KEY_ID"],) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 296 Tm
+(    aws_secret_access_key=os.environ["AWS_SECRET_ACCESS_KEY"],) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 284 Tm
+(    region_name=os.environ["AWS_REGION"],) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 272 Tm
+(\)) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 260 Tm
+( ) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 248 Tm
+(filename = f"books/{uuid4\(\)}.pdf") Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 236 Tm
+(s3.upload_fileobj\(file, os.environ["S3_BUCKET_NAME"], filename\)) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 224 Tm
+( ) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 212 Tm
+(file_url =) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 200 Tm
+(f"https://{os.environ['S3_BUCKET_NAME']}.s3.amazonaws.com/{filename}") Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 48 180 Tm
+(Recommended database storage pattern) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 160 Tm
+(Store only metadata in PostgreSQL:) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 142 Tm
+(- title) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 126 Tm
+(- original filename) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 110 Tm
+(- provider name) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 94 Tm
+(- provider public id) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 78 Tm
+(- secure URL) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 62 Tm
+(- uploaded by) Tj
+ET
+
+endstream
+endobj
+12 0 obj
+<< /Length 3343 >>
+stream
+BT
+/F1 9 Tf
+1 0 0 1 48 24 Tm
+(Academic Kechafa Deployment Guide - Page 9 of 14) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 788 Tm
+(- created at) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 772 Tm
+(Do not store large binary files in the database.) Tj
+ET
+BT
+/F2 16 Tf
+1 0 0 1 48 746 Tm
+(15. Frontend Integration: HTML Or React) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 722 Tm
+(You currently have server-rendered HTML templates. That is the easiest deployment model.) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 48 700 Tm
+(Option A: Keep Flask templates) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 680 Tm
+(This is simplest and fastest:) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 662 Tm
+(- Flask serves HTML) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 646 Tm
+(- Flask handles login) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 630 Tm
+(- Flask reads and writes data) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 614 Tm
+(- same domain, simpler cookies, simpler deployment) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 48 594 Tm
+(Option B: Add a React frontend later) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 574 Tm
+(If you separate the frontend and backend:) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 556 Tm
+(- React frontend can live on Vercel, Netlify, or Render) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 540 Tm
+(- Flask API can stay on Render) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 524 Tm
+(- the two apps communicate through JSON APIs) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 48 504 Tm
+(Example React fetch call) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 482 Tm
+(const response = await fetch\("https://api.yourdomain.com/api/courses", {) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 470 Tm
+(  method: "GET",) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 458 Tm
+(  credentials: "include",) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 446 Tm
+(  headers: {) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 434 Tm
+(    "Content-Type": "application/json") Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 422 Tm
+(  }) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 410 Tm
+(}\);) Tj
+ET
+BT
+/F2 16 Tf
+1 0 0 1 48 386 Tm
+(16. How To Handle CORS) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 362 Tm
+(You do not currently have Flask-CORS configured. That is okay while you use server-rendered) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 348 Tm
+(templates on the same domain.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 330 Tm
+(If you split React and Flask into separate origins, add Flask-Cors.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 312 Tm
+(Install:) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 292 Tm
+(pip install Flask-Cors) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 276 Tm
+(Example:) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 256 Tm
+(from flask_cors import CORS) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 244 Tm
+( ) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 232 Tm
+(def create_app\(config_name=None, config_overrides=None\):) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 220 Tm
+(    app = Flask\(__name__, template_folder="../templates",) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 208 Tm
+(static_folder="../static"\)) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 196 Tm
+( ) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 184 Tm
+(    CORS\() Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 172 Tm
+(        app,) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 160 Tm
+(        resources={r"/api/*": {"origins": ["https://app.yourdomain.com"]}},) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 148 Tm
+(        supports_credentials=True,) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 136 Tm
+(    \)) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 124 Tm
+( ) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 112 Tm
+(    return app) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 96 Tm
+(Important:) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 78 Tm
+(- If you use cookies across domains, configure SameSite, Secure, and CSRF protection) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 64 Tm
+(carefully.) Tj
+ET
+
+endstream
+endobj
+13 0 obj
+<< /Length 3191 >>
+stream
+BT
+/F1 9 Tf
+1 0 0 1 48 24 Tm
+(Academic Kechafa Deployment Guide - Page 10 of 14) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 788 Tm
+(- For beginners, keeping Flask templates on the same domain is easier than splitting) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 774 Tm
+(React and Flask immediately.) Tj
+ET
+BT
+/F2 16 Tf
+1 0 0 1 48 750 Tm
+(17. Security Checklist) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 726 Tm
+(Your app already has login and register pages. That is a good start.) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 708 Tm
+(To harden security for production:) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 690 Tm
+(1. Set a strong SECRET_KEY) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 674 Tm
+(2. Keep FLASK_ENV=production) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 658 Tm
+(3. Enable FORCE_HTTPS=true) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 642 Tm
+(4. Enable TRUST_PROXY_HEADERS=true) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 626 Tm
+(5. Keep SESSION_COOKIE_SECURE=True in production) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 610 Tm
+(6. Rotate any leaked API keys) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 594 Tm
+(7. Add rate limiting for login and AI endpoints) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 578 Tm
+(8. Add CSRF protection for forms) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 562 Tm
+(9. Add email verification and password reset) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 546 Tm
+(10. Restrict admin routes carefully) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 48 526 Tm
+(Protecting API routes) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 506 Tm
+(For HTML views, you already use decorators like:) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 488 Tm
+(- login_required) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 472 Tm
+(- admin_required) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 456 Tm
+(- instructor_required) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 440 Tm
+(For future JSON APIs, keep the same access rules and return JSON errors.) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 48 418 Tm
+(Example protected API route) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 396 Tm
+(@app.route\("/api/me"\)) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 384 Tm
+(@login_required) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 372 Tm
+(def me\(\):) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 360 Tm
+(    return {"ok": True}) Tj
+ET
+BT
+/F2 16 Tf
+1 0 0 1 48 336 Tm
+(18. Custom Domain And HTTPS) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 312 Tm
+(After deployment works on the generated Render URL:) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 294 Tm
+(1. Buy a domain from a registrar) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 278 Tm
+(2. Add the domain in the Render dashboard) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 262 Tm
+(3. Update DNS records at your domain provider) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 246 Tm
+(4. Wait for DNS propagation) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 230 Tm
+(5. Test HTTPS) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 214 Tm
+(For this project, also set:) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 194 Tm
+(PREFERRED_URL_SCHEME=https) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 182 Tm
+(FORCE_HTTPS=true) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 170 Tm
+(TRUST_PROXY_HEADERS=true) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 154 Tm
+(Why these matter:) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 136 Tm
+(- PREFERRED_URL_SCHEME=https makes generated links use HTTPS) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 120 Tm
+(- FORCE_HTTPS=true redirects insecure traffic) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 104 Tm
+(- TRUST_PROXY_HEADERS=true prevents redirect loops behind a proxy) Tj
+ET
+BT
+/F2 16 Tf
+1 0 0 1 48 80 Tm
+(19. Common Deployment Errors And Fixes) Tj
+ET
+
+endstream
+endobj
+14 0 obj
+<< /Length 2989 >>
+stream
+BT
+/F1 9 Tf
+1 0 0 1 48 24 Tm
+(Academic Kechafa Deployment Guide - Page 11 of 14) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 48 788 Tm
+(Error: ModuleNotFoundError: No module named gunicorn) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 768 Tm
+(Fix:) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 748 Tm
+(Add gunicorn to requirements.txt and redeploy.) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 48 728 Tm
+(Error: app starts locally but crashes on Render) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 708 Tm
+(Common reasons:) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 690 Tm
+(- missing environment variables) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 674 Tm
+(- wrong start command) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 658 Tm
+(- code still assuming local paths) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 642 Tm
+(- .env values not copied into the hosting dashboard) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 48 622 Tm
+(Error: sqlite3.OperationalError: unable to open database file) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 602 Tm
+(Fix:) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 584 Tm
+(- use a valid writable path) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 568 Tm
+(- on Render, point KECHAFA_DB to the persistent disk mount) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 48 548 Tm
+(Error: uploaded files disappear after redeploy) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 528 Tm
+(Cause:) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 510 Tm
+(- files were stored on local service disk) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 494 Tm
+(Fix:) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 476 Tm
+(- move media to Cloudinary or S3) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 48 456 Tm
+(Error: redirect loop with HTTPS) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 436 Tm
+(Fix:) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 416 Tm
+(TRUST_PROXY_HEADERS=true) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 404 Tm
+(FORCE_HTTPS=true) Tj
+ET
+BT
+/F3 9 Tf
+1 0 0 1 48 392 Tm
+(PREFERRED_URL_SCHEME=https) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 48 372 Tm
+(Error: large uploads fail) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 352 Tm
+(Fix:) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 334 Tm
+(- increase MAX_CONTENT_LENGTH_MB) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 318 Tm
+(- use direct-to-cloud uploads for large videos) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 48 298 Tm
+(Error: PostgreSQL URL is set but app still uses SQLite) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 278 Tm
+(Cause:) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 260 Tm
+(- current repo still reads from database.py using sqlite3) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 244 Tm
+(Fix:) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 226 Tm
+(- finish the database migration before relying on PostgreSQL in production) Tj
+ET
+BT
+/F2 16 Tf
+1 0 0 1 48 202 Tm
+(20. Scaling Tips) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 178 Tm
+(When traffic grows, do this:) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 160 Tm
+(1. Move media out of the app server) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 144 Tm
+(2. Use PostgreSQL instead of SQLite) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 128 Tm
+(3. Add Redis for caching and queues) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 112 Tm
+(4. Move slow jobs to background workers) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 96 Tm
+(5. Paginate feeds, books, and messages) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 80 Tm
+(6. Compress images and thumbnails) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 64 Tm
+(7. Use CDN-backed media URLs) Tj
+ET
+
+endstream
+endobj
+15 0 obj
+<< /Length 3138 >>
+stream
+BT
+/F1 9 Tf
+1 0 0 1 48 24 Tm
+(Academic Kechafa Deployment Guide - Page 12 of 14) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 788 Tm
+(8. Add indexes to frequently queried tables) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 772 Tm
+(9. Monitor logs, response time, and database load) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 756 Tm
+(10. Split API, worker, and frontend later if needed) Tj
+ET
+BT
+/F2 16 Tf
+1 0 0 1 48 732 Tm
+(21. Basic Performance Tips) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 708 Tm
+(For this e-learning platform:) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 690 Tm
+(- lazy-load videos and book covers) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 674 Tm
+(- generate thumbnails instead of loading original media everywhere) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 658 Tm
+(- cache category lists and dashboard counters) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 642 Tm
+(- avoid re-running heavy queries on every request) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 626 Tm
+(- move AI calls to background jobs if they become slow) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 610 Tm
+(- serve static assets with cache headers) Tj
+ET
+BT
+/F2 16 Tf
+1 0 0 1 48 586 Tm
+(22. Suggested Real-World Upgrade Roadmap) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 48 558 Tm
+(Stage 1: Launchable) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 538 Tm
+(- add wsgi.py) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 522 Tm
+(- use Gunicorn) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 506 Tm
+(- deploy on Render) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 490 Tm
+(- use SQLite only for demo if needed) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 48 470 Tm
+(Stage 2: Professional backend) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 450 Tm
+(- finish SQLAlchemy integration using models.py) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 434 Tm
+(- add Flask-Migrate) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 418 Tm
+(- move to PostgreSQL) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 402 Tm
+(- clean repository and secrets) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 48 382 Tm
+(Stage 3: Professional media pipeline) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 362 Tm
+(- Cloudinary for video and images) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 346 Tm
+(- S3 for books and large documents) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 330 Tm
+(- direct browser upload for big files) Tj
+ET
+BT
+/F2 13 Tf
+1 0 0 1 48 310 Tm
+(Stage 4: Product quality) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 290 Tm
+(- password reset) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 274 Tm
+(- email verification) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 258 Tm
+(- audit logs) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 242 Tm
+(- analytics dashboard) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 226 Tm
+(- admin moderation tools) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 210 Tm
+(- background workers) Tj
+ET
+BT
+/F2 16 Tf
+1 0 0 1 48 186 Tm
+(23. Bonus Ideas For An AI-Powered E-Learning Platform) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 162 Tm
+(These are strong next features for your product:) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 144 Tm
+(1. AI quiz generation from lessons and books) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 128 Tm
+(2. AI summaries for PDFs and course videos) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 112 Tm
+(3. Semantic search across books, lessons, and conversations) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 96 Tm
+(4. Personalized learning paths) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 80 Tm
+(5. Progress dashboards for students and instructors) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 64 Tm
+(6. Certificates with verification pages) Tj
+ET
+
+endstream
+endobj
+16 0 obj
+<< /Length 3360 >>
+stream
+BT
+/F1 9 Tf
+1 0 0 1 48 24 Tm
+(Academic Kechafa Deployment Guide - Page 13 of 14) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 788 Tm
+(7. Video transcription and subtitles) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 772 Tm
+(8. Study reminders by email or push notification) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 756 Tm
+(9. Role-based admin analytics) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 740 Tm
+(10. Recommendation engine for courses and books) Tj
+ET
+BT
+/F2 16 Tf
+1 0 0 1 48 716 Tm
+(24. My Recommended Exact Path For You) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 692 Tm
+(If you want the smartest path with the least wasted time, do this in order:) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 674 Tm
+(1. Clean the repo and rotate any committed secrets) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 658 Tm
+(2. Add wsgi.py) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 642 Tm
+(3. Add gunicorn to production requirements) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 626 Tm
+(4. Deploy to Render with SQLite on a persistent disk for a first online version) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 610 Tm
+(5. Confirm the public app works) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 594 Tm
+(6. Finish the PostgreSQL migration using the existing models.py foundation) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 578 Tm
+(7. Move videos and books to Cloudinary or S3) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 562 Tm
+(8. Redeploy with PostgreSQL and cloud media) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 546 Tm
+(9. Add a custom domain) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 530 Tm
+(10. Turn on live AI only after the app is stable) Tj
+ET
+BT
+/F2 16 Tf
+1 0 0 1 48 506 Tm
+(25. Final Summary) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 482 Tm
+(You already have a good Flask foundation:) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 464 Tm
+(- authentication) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 448 Tm
+(- courses) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 432 Tm
+(- books) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 416 Tm
+(- messages) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 400 Tm
+(- notifications) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 384 Tm
+(- AI chat) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 368 Tm
+(The project is close to being deployable, but a professional production version needs four) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 354 Tm
+(major upgrades:) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 336 Tm
+(1. Gunicorn instead of Flask dev server) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 320 Tm
+(2. PostgreSQL instead of SQLite) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 304 Tm
+(3. Cloud media storage instead of local static/uploads) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 288 Tm
+(4. Stronger secret and deployment hygiene) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 272 Tm
+(If you follow this guide, you can get:) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 254 Tm
+(- a fast public demo first) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 238 Tm
+(- then a production-ready architecture for a real application) Tj
+ET
+BT
+/F2 16 Tf
+1 0 0 1 48 214 Tm
+(26. Useful Links) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 190 Tm
+(Official home pages and docs entry points:) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 172 Tm
+(- Render: https://render.com/) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 156 Tm
+(- Render docs: https://render.com/docs) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 140 Tm
+(- Railway: https://railway.com/) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 124 Tm
+(- Railway docs: https://docs.railway.com/) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 108 Tm
+(- Cloudinary docs: https://cloudinary.com/documentation) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 92 Tm
+(- AWS S3 docs: https://docs.aws.amazon.com/s3/) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 76 Tm
+(- Flask deployment docs: https://flask.palletsprojects.com/) Tj
+ET
+
+endstream
+endobj
+17 0 obj
+<< /Length 170 >>
+stream
+BT
+/F1 9 Tf
+1 0 0 1 48 24 Tm
+(Academic Kechafa Deployment Guide - Page 14 of 14) Tj
+ET
+BT
+/F1 10 Tf
+1 0 0 1 48 788 Tm
+(- Gunicorn docs: https://docs.gunicorn.org/) Tj
+ET
+
+endstream
+endobj
+18 0 obj
+<< /Type /Pages /Kids [19 0 R 20 0 R 21 0 R 22 0 R 23 0 R 24 0 R 25 0 R 26 0 R 27 0 R 28 0 R 29 0 R 30 0 R 31 0 R 32 0 R] /Count 14 >>
+endobj
+19 0 obj
+<< /Type /Page /Parent 18 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 4 0 R >>
+endobj
+20 0 obj
+<< /Type /Page /Parent 18 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 5 0 R >>
+endobj
+21 0 obj
+<< /Type /Page /Parent 18 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 6 0 R >>
+endobj
+22 0 obj
+<< /Type /Page /Parent 18 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 7 0 R >>
+endobj
+23 0 obj
+<< /Type /Page /Parent 18 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 8 0 R >>
+endobj
+24 0 obj
+<< /Type /Page /Parent 18 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 9 0 R >>
+endobj
+25 0 obj
+<< /Type /Page /Parent 18 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 10 0 R >>
+endobj
+26 0 obj
+<< /Type /Page /Parent 18 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 11 0 R >>
+endobj
+27 0 obj
+<< /Type /Page /Parent 18 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 12 0 R >>
+endobj
+28 0 obj
+<< /Type /Page /Parent 18 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 13 0 R >>
+endobj
+29 0 obj
+<< /Type /Page /Parent 18 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 14 0 R >>
+endobj
+30 0 obj
+<< /Type /Page /Parent 18 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 15 0 R >>
+endobj
+31 0 obj
+<< /Type /Page /Parent 18 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 16 0 R >>
+endobj
+32 0 obj
+<< /Type /Page /Parent 18 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 1 0 R /F2 2 0 R /F3 3 0 R >> >> /Contents 17 0 R >>
+endobj
+33 0 obj
+<< /Type /Catalog /Pages 18 0 R >>
+endobj
+xref
+0 34
+0000000000 65535 f 
+0000000015 00000 n 
+0000000085 00000 n 
+0000000160 00000 n 
+0000000228 00000 n 
+0000003995 00000 n 
+0000007341 00000 n 
+0000010727 00000 n 
+0000013963 00000 n 
+0000016892 00000 n 
+0000020220 00000 n 
+0000023325 00000 n 
+0000026734 00000 n 
+0000030130 00000 n 
+0000033374 00000 n 
+0000036416 00000 n 
+0000039607 00000 n 
+0000043020 00000 n 
+0000043242 00000 n 
+0000043393 00000 n 
+0000043541 00000 n 
+0000043689 00000 n 
+0000043837 00000 n 
+0000043985 00000 n 
+0000044133 00000 n 
+0000044281 00000 n 
+0000044430 00000 n 
+0000044579 00000 n 
+0000044728 00000 n 
+0000044877 00000 n 
+0000045026 00000 n 
+0000045175 00000 n 
+0000045324 00000 n 
+0000045473 00000 n 
+trailer
+<< /Size 34 /Root 33 0 R >>
+startxref
+45524
+%%EOF

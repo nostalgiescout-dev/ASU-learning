@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: kechafa-app
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:application --bind 0.0.0.0:$PORT --workers 2 --timeout 120
+    plan: free
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: TRUST_PROXY_HEADERS
+        value: "true"
+      - key: FORCE_HTTPS
+        value: "true"
+      - key: PREFERRED_URL_SCHEME
+        value: https
+      - key: SECRET_KEY
+        generateValue: true
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: ENABLE_REAL_AI
+        value: "false"

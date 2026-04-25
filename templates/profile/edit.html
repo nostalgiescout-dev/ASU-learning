@@ -1,0 +1,464 @@
+{% extends "base.html" %}
+{% block title %}Edit Profile{% endblock %}
+{% block head_extra %}
+<style>
+  .avatar-modal-card {
+    border-radius: 28px;
+    box-shadow: 0 30px 80px rgba(15, 23, 42, 0.24);
+  }
+
+  .avatar-tab-btn-active {
+    background: linear-gradient(135deg, #2563eb, #3b82f6);
+    color: #fff;
+    box-shadow: 0 14px 28px rgba(37, 99, 235, 0.22);
+  }
+
+  .avatar-stage {
+    position: relative;
+    border: 1px dashed #dbe4f0;
+    border-radius: 28px;
+    background:
+      radial-gradient(circle at top, rgba(255, 255, 255, 0.86), rgba(248, 250, 252, 0.94)),
+      linear-gradient(135deg, #eff6ff, #f8fafc);
+    overflow: hidden;
+  }
+
+  .avatar-crop-canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+    cursor: grab;
+  }
+
+  .avatar-crop-canvas.is-dragging {
+    cursor: grabbing;
+  }
+
+  .avatar-zoom-slider {
+    accent-color: #2563eb;
+  }
+
+  .avatar-camera-frame {
+    border: 1px dashed #dbe4f0;
+    border-radius: 28px;
+    overflow: hidden;
+    background: #0f172a;
+  }
+</style>
+{% endblock %}
+{% block content %}
+<div class="max-w-lg mx-auto px-4 py-6">
+  <div class="flex items-center gap-3 mb-6">
+    <a href="{{ url_for('profile.view', username=user['username']) }}"
+       class="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition">
+      <iconify-icon icon="solar:arrow-left-bold" class="text-slate-600 flip-rtl"></iconify-icon>
+    </a>
+    <h1 class="font-display font-bold text-xl text-slate-900">Edit Profile</h1>
+  </div>
+  <div class="card p-6">
+    <form method="POST" action="{{ url_for('profile.edit') }}" class="space-y-4">
+      <div class="mb-4">
+        <label class="block text-xs font-semibold text-slate-600 mb-2">Profile photo</label>
+        <div class="flex items-center gap-4">
+          <div class="relative">
+            <img src="{{ user['avatar_url'] }}" id="avatar-preview" alt="Profile photo"
+                 class="w-16 h-16 rounded-full object-cover ring-2 ring-blue-100" />
+            <button type="button" id="edit-avatar-btn"
+                    class="absolute inset-0 flex items-center justify-center rounded-full bg-black/30 text-white opacity-0 hover:opacity-100 transition"
+                    aria-label="Edit profile photo">
+              ✏️ Edit Photo
+            </button>
+          </div>
+          <p class="text-sm text-slate-500">Update your photo via upload or camera.</p>
+        </div>
+        <input type="hidden" name="avatar_url" id="avatar-url-hidden" value="{{ user['avatar_url'] or '' }}" />
+      </div>
+      <input type="file" id="avatar-file-input" accept="image/png,image/jpeg,image/webp" class="hidden" />
+      <div id="avatar-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4">
+        <div class="avatar-modal-card relative w-full max-w-xl bg-white overflow-hidden">
+          <div class="flex items-center justify-between p-4 border-b border-slate-100">
+            <h2 class="text-xl font-bold text-slate-900">Update profile photo</h2>
+            <button type="button" id="avatar-modal-close" class="text-slate-500 hover:text-slate-700" aria-label="Close modal">✕</button>
+          </div>
+          <div class="p-4 space-y-4">
+            <div class="flex items-center justify-between gap-2">
+              <div class="flex-1 grid grid-cols-2 gap-2">
+                <button type="button" class="tab-btn px-3 py-2 rounded-xl text-xs font-semibold" data-tab="upload">Upload</button>
+                <button type="button" class="tab-btn px-3 py-2 rounded-xl text-xs font-semibold" data-tab="camera">Camera</button>
+              </div>
+              <button type="button" id="reset-avatar-btn" class="px-3 py-2 text-xs rounded-xl border border-slate-200 hover:bg-slate-50">{{ _('Reset') }}</button>
+            </div>
+
+            <div id="avatar-tab-content" class="space-y-3">
+              <div class="tab-panel" data-tab="upload">
+                <div id="upload-dropzone" class="avatar-stage h-80 flex items-center justify-center">
+                  <canvas id="avatar-crop-canvas" class="avatar-crop-canvas"></canvas>
+                  <div id="upload-hint" class="absolute inset-0 flex flex-col items-center justify-center text-slate-500">
+                    <p class="text-lg font-semibold text-slate-700">Drag & drop or click to upload</p>
+                    <p class="text-xs mt-1">JPEG, PNG, WebP • max 5MB</p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-3">
+                  <input type="range" id="zoom-slider" min="1" max="3.5" step="0.05" value="1" class="avatar-zoom-slider flex-1" aria-label="Zoom" />
+                  <span class="text-xs text-slate-500" id="zoom-value">100%</span>
+                </div>
+              </div>
+
+              <div class="tab-panel hidden" data-tab="camera">
+                <div class="avatar-camera-frame h-80 relative flex items-center justify-center">
+                  <video id="camera-video" autoplay playsinline class="w-full h-full object-cover"></video>
+                  <div id="camera-overlay" class="absolute inset-0 bg-black/40 flex items-center justify-center text-white text-sm">Allow camera access to capture photo</div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button type="button" id="camera-capture-btn" class="flex-1 px-3 py-2 rounded-xl bg-blue-600 text-white text-sm hover:bg-blue-700 transition" disabled>Capture</button>
+                  <button type="button" id="camera-retake-btn" class="flex-1 px-3 py-2 rounded-xl bg-slate-100 text-sm hover:bg-slate-200 transition" disabled>Retake</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+              <span class="text-xs text-slate-500" id="avatar-error" role="alert"></span>
+              <button type="button" id="avatar-cancel-btn" class="px-4 py-2 rounded-xl bg-slate-100 text-sm hover:bg-slate-200 transition">Cancel</button>
+              <button type="button" id="avatar-save-btn" class="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm hover:bg-blue-700 transition disabled:opacity-50" disabled>Save</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Full Name</label>
+          <input type="text" name="full_name" value="{{ user['full_name'] or '' }}"
+                 class="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Country</label>
+          <input type="text" name="country" value="{{ user['country'] or '' }}" placeholder="Morocco"
+                 class="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 mb-1">Scout Unit</label>
+        <input type="text" name="scout_unit" value="{{ user['scout_unit'] or '' }}" placeholder="Casablanca Group 7"
+               class="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400" />
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 mb-1">Bio</label>
+        <textarea name="bio" rows="3"
+                  class="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none"
+                  placeholder="Tell the community about yourself…">{{ user['bio'] or '' }}</textarea>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 mb-2">Preferred Language</label>
+        <div class="grid grid-cols-4 gap-2">
+          {% for code,flag,label in [('ar','🇲🇦','العربية'),('en','🇬🇧','English'),('fr','🇫🇷','Français'),('es','🇪🇸','Español')] %}
+          <label class="cursor-pointer">
+            <input type="radio" name="preferred_lang" value="{{ code }}" class="sr-only"
+                   {{ 'checked' if user['preferred_lang']==code }} />
+            <div class="lang-opt flex flex-col items-center gap-1 p-2 rounded-xl border-2 transition
+                        {{ 'border-blue-400 bg-blue-50' if user['preferred_lang']==code else 'border-slate-200 hover:border-blue-200' }}">
+              <span class="text-xl">{{ flag }}</span>
+              <span class="text-xs font-semibold text-slate-700">{{ label }}</span>
+            </div>
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+      <button type="submit"
+              class="w-full py-3 rounded-xl xp-badge font-semibold text-sm hover:opacity-90 transition">
+        Save Changes ✅
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(function(){
+  const avatarPreview        = document.getElementById('avatar-preview');
+  const avatarUrlHidden       = document.getElementById('avatar-url-hidden');
+  const editAvatarBtn        = document.getElementById('edit-avatar-btn');
+  const avatarModal          = document.getElementById('avatar-modal');
+  const avatarModalClose     = document.getElementById('avatar-modal-close');
+  const avatarCancelBtn      = document.getElementById('avatar-cancel-btn');
+  const avatarSaveBtn        = document.getElementById('avatar-save-btn');
+  const avatarError          = document.getElementById('avatar-error');
+  const avatarFileInput      = document.getElementById('avatar-file-input');
+  const uploadDropzone       = document.getElementById('upload-dropzone');
+  const uploadHint           = document.getElementById('upload-hint');
+  const cropCanvas           = document.getElementById('avatar-crop-canvas');
+  const zoomSlider           = document.getElementById('zoom-slider');
+  const zoomValue            = document.getElementById('zoom-value');
+  const resetBtn             = document.getElementById('reset-avatar-btn');
+  const cameraVideo          = document.getElementById('camera-video');
+  const cameraOverlay        = document.getElementById('camera-overlay');
+  const cameraCaptureBtn     = document.getElementById('camera-capture-btn');
+  const cameraRetakeBtn      = document.getElementById('camera-retake-btn');
+
+  const tabButtons           = Array.from(document.querySelectorAll('.tab-btn'));
+  const tabPanels            = Array.from(document.querySelectorAll('.tab-panel'));
+
+  const initialAvatarUrl     = avatarPreview.src;
+
+  let currentImage          = null;
+  let currentImageDataUrl   = '';
+  let cameraStream         = null;
+  let hasChanges           = false;
+
+  const ctx = cropCanvas.getContext('2d');
+  const canvasSize = 480;
+  cropCanvas.width = canvasSize;
+  cropCanvas.height = canvasSize;
+
+  function setError(message){
+    avatarError.textContent = message || '';
+  }
+
+  function setHasChanges(value){
+    hasChanges = value;
+    avatarSaveBtn.disabled = !value;
+  }
+
+  function drawCanvas(){
+    if (!currentImage) {
+      ctx.clearRect(0,0,canvasSize,canvasSize);
+      uploadHint.classList.remove('hidden');
+      return;
+    }
+    const iw = currentImage.naturalWidth;
+    const ih = currentImage.naturalHeight;
+    const scale = Math.min(canvasSize / iw, canvasSize / ih);
+    const drawW = iw * scale;
+    const drawH = ih * scale;
+    const dx = (canvasSize - drawW) / 2;
+    const dy = (canvasSize - drawH) / 2;
+
+    ctx.clearRect(0,0,canvasSize,canvasSize);
+    ctx.drawImage(currentImage, dx, dy, drawW, drawH);
+    uploadHint.classList.add('hidden');
+  }
+
+  function updateZoomLabel(){
+    zoomValue.textContent = 'Original';
+  }
+
+  function resetCropState(){
+    zoomSlider.value = 1;
+    updateZoomLabel();
+    drawCanvas();
+  }
+
+  function loadFile(file){
+    setError('');
+    if (!file) return;
+    if (!file.type.match(/image\/(png|jpeg|webp)/)){
+      setError('Only JPG, PNG, WEBP are supported.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024){
+      setError('Image must be 5MB or smaller.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = ()=>{
+      const dataUrl = reader.result;
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = ()=>{
+        currentImage = img;
+        currentImageDataUrl = dataUrl;
+        resetCropState();
+        setHasChanges(true);
+      };
+      img.onerror = ()=> setError('Failed to load image.');
+      img.src = dataUrl;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function uploadCroppedImage(){
+    const dataUrl = currentImageDataUrl;
+    if (!dataUrl) return;
+    avatarSaveBtn.disabled = true;
+    avatarSaveBtn.textContent = 'Saving…';
+    setError('');
+
+    const form = new FormData();
+    form.append('avatar_data', dataUrl);
+
+    try {
+      const resp = await fetch('{{ url_for("profile.upload_avatar") }}', {
+        method: 'POST',
+        body: form,
+      });
+      const json = await resp.json();
+      if (!json.success){
+        setError(json.error || 'Upload failed.');
+        return;
+      }
+      avatarPreview.src = json.url;
+      avatarUrlHidden.value = json.url;
+      closeModal();
+      setHasChanges(false);
+    } catch (err){
+      setError('Upload failed. Please try again.');
+    } finally {
+      avatarSaveBtn.disabled = !hasChanges;
+      avatarSaveBtn.textContent = 'Save';
+    }
+  }
+
+  function activateTab(tabName){
+    tabButtons.forEach(btn=>{
+      const active = btn.dataset.tab === tabName;
+      btn.classList.toggle('avatar-tab-btn-active', active);
+      btn.classList.toggle('text-white', active);
+      btn.classList.toggle('bg-slate-100', !active);
+      btn.classList.toggle('text-slate-700', !active);
+    });
+    tabPanels.forEach(panel=>{
+      panel.classList.toggle('hidden', panel.dataset.tab !== tabName);
+    });
+    if (tabName === 'camera'){
+      startCamera();
+    } else {
+      stopCamera();
+    }
+  }
+
+  function openModal(){
+    avatarModal.classList.remove('hidden');
+    activateTab('upload');
+    setError('');
+    resetCropState();
+    setHasChanges(false);
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal(){
+    avatarModal.classList.add('hidden');
+    stopCamera();
+    document.body.style.overflow = '';
+  }
+
+  function startCamera(){
+    if (cameraStream) return;
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } })
+      .then(stream=>{
+        cameraStream = stream;
+        cameraVideo.srcObject = stream;
+        cameraOverlay.classList.add('hidden');
+        cameraCaptureBtn.disabled = false;
+        cameraRetakeBtn.disabled = true;
+      })
+      .catch(()=>{
+        setError('Unable to access camera. Please check permissions.');
+      });
+  }
+
+  function stopCamera(){
+    if (!cameraStream) return;
+    cameraStream.getTracks().forEach(track=>track.stop());
+    cameraStream = null;
+    cameraVideo.srcObject = null;
+    cameraOverlay.classList.remove('hidden');
+    cameraCaptureBtn.disabled = true;
+    cameraRetakeBtn.disabled = true;
+  }
+
+  function captureCameraFrame(){
+    if (!cameraStream) return;
+    const video = cameraVideo;
+    const temp = document.createElement('canvas');
+    temp.width = video.videoWidth;
+    temp.height = video.videoHeight;
+    temp.getContext('2d').drawImage(video, 0, 0, temp.width, temp.height);
+    const dataUrl = temp.toDataURL('image/png');
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = ()=>{
+      currentImage = img;
+      currentImageDataUrl = dataUrl;
+      resetCropState();
+      setHasChanges(true);
+      cameraRetakeBtn.disabled = false;
+      activateTab('upload');
+    };
+    img.src = dataUrl;
+  }
+
+  editAvatarBtn.addEventListener('click', openModal);
+  avatarModalClose.addEventListener('click', closeModal);
+  avatarCancelBtn.addEventListener('click', closeModal);
+
+  avatarModal.addEventListener('click', (event)=>{
+    if (event.target === avatarModal) closeModal();
+  });
+
+  tabButtons.forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      activateTab(btn.dataset.tab);
+    });
+  });
+
+  uploadDropzone.addEventListener('click', ()=> avatarFileInput.click());
+  uploadDropzone.addEventListener('dragover', e=>{ e.preventDefault(); uploadDropzone.classList.add('border-blue-400'); });
+  uploadDropzone.addEventListener('dragleave', ()=> uploadDropzone.classList.remove('border-blue-400'));
+  uploadDropzone.addEventListener('drop', e=>{
+    e.preventDefault();
+    uploadDropzone.classList.remove('border-blue-400');
+    const file = e.dataTransfer.files[0];
+    if (file) loadFile(file);
+  });
+
+  avatarFileInput.addEventListener('change', ()=>{
+    const file = avatarFileInput.files[0];
+    if (file) loadFile(file);
+  });
+
+  zoomSlider.addEventListener('input', ()=>{
+    zoomSlider.value = 1;
+    updateZoomLabel();
+  });
+
+  resetBtn.addEventListener('click', ()=>{
+    setError('');
+    avatarPreview.src = initialAvatarUrl;
+    avatarUrlHidden.value = initialAvatarUrl;
+    currentImage = null;
+    currentImageDataUrl = '';
+    resetCropState();
+    uploadHint.classList.remove('hidden');
+    setHasChanges(false);
+  });
+
+  cameraCaptureBtn.addEventListener('click', ()=>{
+    captureCameraFrame();
+  });
+
+  cameraRetakeBtn.addEventListener('click', ()=>{
+    startCamera();
+  });
+
+  avatarSaveBtn.addEventListener('click', ()=>{
+    uploadCroppedImage();
+  });
+
+  // Initialize
+  activateTab('upload');
+
+  // Language selection styling
+  document.querySelectorAll('input[name="preferred_lang"]').forEach(r=>{
+    r.addEventListener('change',()=>{
+      document.querySelectorAll('.lang-opt').forEach(el=>{
+        el.classList.replace('border-blue-400','border-slate-200');
+        el.classList.remove('bg-blue-50');
+      });
+      r.nextElementSibling.classList.replace('border-slate-200','border-blue-400');
+      r.nextElementSibling.classList.add('bg-blue-50');
+    });
+  });
+})();
+</script>
+{% endblock %}

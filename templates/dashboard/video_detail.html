@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+{% block title %}{{ video['title'] }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-6">
+
+  <!-- Back -->
+  <a href="{{ url_for('dashboard.feed') }}"
+     class="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-primary-600 mb-5 transition">
+    <iconify-icon icon="solar:arrow-left-bold" class="flip-rtl"></iconify-icon> Back to Feed
+  </a>
+
+  <div class="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">
+
+    <!-- Video Player -->
+    <div>
+      <div class="card overflow-hidden mb-4">
+        <div class="bg-black rounded-t-2xl overflow-hidden" style="aspect-ratio: 16/9;">
+          <video controls class="w-full h-full"
+                 poster="{{ video['thumbnail_url'] or '' }}"
+                 preload="metadata">
+            {# In production, video_url should be a CDN URL (Cloudinary/S3) #}
+            <source src="{{ video['video_url'] }}" type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+        </div>
+
+        <div class="p-5">
+          <!-- Title & category -->
+          <div class="flex items-start justify-between gap-3 mb-3">
+            <h1 class="font-display font-800 text-xl text-slate-900 leading-snug">
+              {{ video['title'] }}
+            </h1>
+            <span class="flex-shrink-0 text-xs font-semibold px-3 py-1 rounded-full
+              {{ 'bg-blue-100 text-blue-700' if video['category']=='knot-tying' else
+                 'bg-red-100 text-red-700' if video['category']=='first-aid' else
+                 'bg-green-100 text-green-700' }}">
+              {{ video['category']|replace('-',' ')|title }}
+            </span>
+          </div>
+
+          <!-- Stats row -->
+          <div class="flex items-center gap-4 text-sm text-slate-500 mb-4">
+            <span class="flex items-center gap-1.5">
+              <iconify-icon icon="solar:eye-bold" class="text-base"></iconify-icon>
+              {{ video['view_count'] }} views
+            </span>
+            <span class="flex items-center gap-1.5">
+              <iconify-icon icon="solar:clock-circle-bold" class="text-base"></iconify-icon>
+              {{ video['duration_display'] }}
+            </span>
+            <span class="flex items-center gap-1.5 text-primary-600 font-semibold">
+              <iconify-icon icon="solar:bolt-bold" class="text-base"></iconify-icon>
+              +{{ video['xp_reward'] }} XP
+            </span>
+          </div>
+
+          <!-- Action buttons -->
+          <div class="flex items-center gap-3">
+            <!-- Like button -->
+            <button id="like-btn" data-video="{{ video['id'] }}" data-liked="{{ 'true' if liked else 'false' }}"
+                    class="flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-sm transition
+                           {{ 'bg-red-50 text-red-600 border border-red-200' if liked else 'bg-slate-100 text-slate-600 hover:bg-red-50 hover:text-red-600' }}">
+              <iconify-icon icon="{{ 'solar:heart-bold' if liked else 'solar:heart-outline' }}" class="text-lg"></iconify-icon>
+              <span id="like-count">{{ video['like_count'] }}</span>
+            </button>
+
+            <!-- Share -->
+            <button class="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-100 text-slate-600 text-sm font-semibold hover:bg-slate-200 transition">
+              <iconify-icon icon="solar:share-bold" class="text-lg"></iconify-icon>
+              Share
+            </button>
+
+            <!-- Course link if applicable -->
+            {% if video['course_id'] %}
+            <a href="{{ url_for('courses.detail', course_id=video['course_id']) }}"
+               class="ms-auto flex items-center gap-1.5 text-xs text-primary-600 font-semibold hover:underline">
+              📚 Part of: {{ video['course_title'] }}
+            </a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Uploader info -->
+      <div class="card p-4 mb-4">
+        <div class="flex items-center gap-3">
+          <img src="{{ video['uavatar'] }}" alt=""
+               class="w-12 h-12 rounded-full object-cover ring-2 ring-primary-100" />
+          <div>
+            <a href="{{ url_for('profile.view', username=video['username']) }}"
+               class="font-semibold text-slate-800 hover:text-primary-600 transition">
+              {{ video['full_name'] or video['username'] }}
+            </a>
+            <div class="text-xs text-slate-500 mt-0.5">
+              {{ {'instructor':'🎓 Instructor','admin':'⚙️ Admin'}.get(video['urole'], '🔭 Scout') }}
+              · Level {{ video['level_rank'] }}
+            </div>
+          </div>
+          {% if current_user['id'] != video['uploader_id'] %}
+          <a href="{{ url_for('messages.inbox') }}"
+             class="ms-auto px-4 py-2 rounded-xl bg-primary-600 text-white text-sm font-semibold hover:bg-primary-700 transition">
+            Message
+          </a>
+          {% endif %}
+        </div>
+        {% if video['description'] %}
+        <p class="mt-3 text-sm text-slate-600 leading-relaxed">{{ video['description'] }}</p>
+        {% endif %}
+      </div>
+
+      <!-- Comments -->
+      <div class="card p-4">
+        <h3 class="font-display font-700 text-slate-900 mb-4">
+          💬 Comments ({{ comments|length }})
+        </h3>
+
+        <!-- Add comment -->
+        <form method="POST" action="{{ url_for('dashboard.add_comment', video_id=video['id']) }}" class="mb-5">
+          <div class="flex gap-3">
+            <img src="{{ current_user['avatar_url'] }}" alt=""
+                 class="w-9 h-9 rounded-full object-cover flex-shrink-0" />
+            <div class="flex-1">
+              <input type="text" name="body" required
+                     class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm
+                            focus:outline-none focus:ring-2 focus:ring-primary-400"
+                     placeholder="Add a comment…" />
+            </div>
+            <button type="submit"
+                    class="px-4 py-2.5 rounded-xl xp-badge text-sm font-semibold hover:opacity-90 transition">
+              Post
+            </button>
+          </div>
+        </form>
+
+        <!-- Comment list -->
+        {% for comment in comments %}
+        <div class="flex gap-3 py-3 border-b border-slate-50 last:border-0">
+          <img src="{{ comment['uavatar'] }}" alt=""
+               class="w-9 h-9 rounded-full object-cover flex-shrink-0" />
+          <div class="flex-1">
+            <div class="flex items-center gap-2 mb-0.5">
+              <span class="text-sm font-semibold text-slate-800">
+                {{ comment['full_name'] or comment['username'] }}
+              </span>
+              <span class="text-xs text-slate-400">
+                {{ comment['created_at'][:10] }}
+              </span>
+            </div>
+            <p class="text-sm text-slate-600 leading-relaxed">{{ comment['body'] }}</p>
+          </div>
+        </div>
+        {% else %}
+        <div class="text-center py-6 text-slate-400 text-sm">
+          No comments yet — be the first! 💬
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Related Videos -->
+    <aside>
+      <h2 class="font-display font-700 text-slate-900 mb-3">📺 Related Reels</h2>
+      <div class="space-y-3">
+        {% for r in related %}
+        <a href="{{ url_for('dashboard.video_detail', video_id=r['id']) }}"
+           class="card flex gap-3 p-3 hover:shadow-md transition">
+          <div class="w-24 h-16 rounded-xl bg-slate-200 overflow-hidden flex-shrink-0 relative">
+            {% if r['thumbnail_url'] %}
+              <img src="{{ r['thumbnail_url'] }}" alt="{{ r['title'] }}"
+                   class="w-full h-full object-cover" />
+            {% else %}
+              <div class="w-full h-full flex items-center justify-center text-2xl">🎬</div>
+            {% endif %}
+            <div class="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 hover:opacity-100 transition">
+              <iconify-icon icon="solar:play-bold" class="text-white text-xl"></iconify-icon>
+            </div>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-xs font-semibold text-slate-800 line-clamp-2 mb-1">{{ r['title'] }}</p>
+            <div class="text-xs text-slate-400">
+              {{ r['duration_display'] }} · +{{ r['xp_reward'] }}XP
+            </div>
+          </div>
+        </a>
+        {% else %}
+        <div class="card p-6 text-center text-slate-400 text-sm">No related videos found</div>
+        {% endfor %}
+      </div>
+    </aside>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const likeBtn = document.getElementById('like-btn');
+if (likeBtn) {
+  likeBtn.addEventListener('click', async () => {
+    const videoId = likeBtn.dataset.video;
+    const res = await fetch(`/video/${videoId}/like`, { method: 'POST',
+      headers: { 'X-CSRFToken': '' }  // add CSRF token in production
+    });
+    const data = await res.json();
+    document.getElementById('like-count').textContent = data.count;
+    likeBtn.dataset.liked = data.liked;
+    if (data.liked) {
+      likeBtn.className = likeBtn.className.replace('bg-slate-100 text-slate-600 hover:bg-red-50 hover:text-red-600','bg-red-50 text-red-600 border border-red-200');
+    } else {
+      likeBtn.className = likeBtn.className.replace('bg-red-50 text-red-600 border border-red-200','bg-slate-100 text-slate-600 hover:bg-red-50 hover:text-red-600');
+    }
+    showToast(data.liked ? '❤️ Liked!' : '💔 Unliked', 'success');
+  });
+}
+</script>
+{% endblock %}

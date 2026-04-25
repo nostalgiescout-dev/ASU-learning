@@ -1,0 +1,607 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Chat Kachaf AI') }}{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 py-6">
+  <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px] h-[calc(100vh-96px)]">
+    <section class="flex flex-col min-h-0">
+      <div class="card p-4 mb-4 flex items-center gap-3 flex-shrink-0">
+        <div class="w-12 h-12 rounded-2xl bg-amber-100 flex items-center justify-center text-2xl">
+          <iconify-icon icon="solar:chat-round-bold-duotone"></iconify-icon>
+        </div>
+        <div class="min-w-0">
+          <h1 class="font-display font-700 text-slate-900">{{ _('Chat Kachaf AI') }}</h1>
+          <p id="active-conversation-title" class="mt-0.5 text-sm font-medium text-slate-700">{{ conversation_title }}</p>
+          <p class="text-xs text-slate-500 flex items-center gap-1.5">
+            <span id="provider-dot" class="w-2 h-2 rounded-full {{ 'bg-green-500 animate-pulse' if ai_status.is_live else 'bg-red-400' }}"></span>
+            <span id="provider-text">{{ _('Always available - Powered by {provider}', provider=ai_status.label) }}</span>
+          </p>
+          <p id="provider-reason" class="mt-1 text-[11px] text-slate-400">{{ ai_status.reason }}</p>
+        </div>
+        <div id="provider-badge" class="ms-auto rounded-full px-3 py-1 text-[11px] font-semibold {{ 'bg-green-100 text-green-700' if ai_status.is_live else 'bg-red-100 text-red-700' }}">
+          {{ _('Live') if ai_status.is_live else _('Offline') }}
+        </div>
+        <button id="clear-btn"
+                class="px-3 py-1.5 text-xs font-semibold text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition">
+          {{ _('Clear') }}
+        </button>
+      </div>
+
+      <div id="chat-shell" class="card flex-1 min-h-0 p-4 flex flex-col">
+        <div id="chat-window" class="flex-1 overflow-y-auto space-y-3 px-1">
+          {% if not history %}
+          <div id="empty-state" class="flex items-start gap-3 animate-slide-up">
+            <div class="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center text-lg flex-shrink-0">
+              <iconify-icon icon="solar:chat-round-bold-duotone"></iconify-icon>
+            </div>
+            <div class="bg-white rounded-2xl rounded-ss-sm p-4 shadow-sm border border-slate-100 max-w-[85%]">
+              <p class="text-sm text-slate-700 leading-relaxed">
+                {{ _('Hello, I am <strong>Kachaf AI</strong>. Ask me anything and I will send your message to OpenRouter.')|safe }}
+              </p>
+              <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {% for topic in ['Knot tying techniques', 'First aid procedures', 'Navigation and orienteering', 'Camping and survival', 'Leadership skills', 'Course recommendations'] %}
+                <button class="quick-btn text-xs px-3 py-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 font-medium hover:bg-amber-100 transition text-start">
+                  {{ _(topic) }}
+                </button>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+          {% endif %}
+
+          {% for msg in history %}
+            {% if msg.role == 'user' %}
+            <div class="flex items-start gap-3 justify-end">
+              <div class="flex flex-col items-end gap-1 max-w-[80%]">
+                <div class="bg-primary-600 text-white rounded-2xl rounded-ee-sm p-3.5 text-sm leading-relaxed whitespace-pre-line w-full">
+                  {{ msg.content }}
+                </div>
+                <button type="button"
+                        class="edit-question-btn inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 hover:text-amber-600 transition"
+                        data-message-index="{{ loop.index0 }}">
+                  <iconify-icon icon="solar:pen-2-linear"></iconify-icon>
+                  {{ _('Edit question') }}
+                </button>
+              </div>
+              <img src="{{ current_user['avatar_url'] }}" alt="" class="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+            </div>
+            {% else %}
+            <div class="flex items-start gap-3">
+              <div class="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center text-base flex-shrink-0">
+                <iconify-icon icon="solar:chat-round-bold-duotone"></iconify-icon>
+              </div>
+              <div class="bg-white rounded-2xl rounded-ss-sm p-3.5 shadow-sm border border-slate-100 max-w-[85%] text-sm text-slate-700 leading-relaxed whitespace-pre-line">
+                {{ msg.content }}
+              </div>
+            </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+
+        <div id="typing-indicator" class="hidden flex items-start gap-3 mt-3">
+          <div class="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center text-base flex-shrink-0">
+            <iconify-icon icon="solar:chat-round-bold-duotone"></iconify-icon>
+          </div>
+          <div class="bg-white rounded-2xl rounded-ss-sm px-4 py-3 shadow-sm border border-slate-100">
+            <div class="flex gap-1.5 items-center">
+              <span class="w-2 h-2 rounded-full bg-amber-400 animate-bounce" style="animation-delay:0s"></span>
+              <span class="w-2 h-2 rounded-full bg-amber-400 animate-bounce" style="animation-delay:.15s"></span>
+              <span class="w-2 h-2 rounded-full bg-amber-400 animate-bounce" style="animation-delay:.3s"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="border-t border-slate-100 mt-4 pt-4 flex-shrink-0">
+          <div class="flex items-end gap-3">
+            <img src="{{ current_user['avatar_url'] }}" alt="" class="w-9 h-9 rounded-full object-cover flex-shrink-0" />
+            <textarea id="chat-input" rows="1"
+                      class="flex-1 resize-none bg-slate-50 rounded-xl px-4 py-2.5 text-sm border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-400 max-h-32 leading-relaxed"
+                      placeholder="{{ _('Ask Chat Kachaf AI anything...') }}"
+                      style="min-height: 44px;"></textarea>
+            <button id="send-btn"
+                    class="w-11 h-11 rounded-xl bg-amber-500 hover:bg-amber-600 text-white flex items-center justify-center flex-shrink-0 transition active:scale-95">
+              <iconify-icon icon="solar:plain-bold" class="text-xl flip-rtl"></iconify-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="card p-4 flex flex-col min-h-0">
+      <button id="new-chat-btn"
+              class="inline-flex items-center justify-center gap-1.5 rounded-xl bg-amber-500 px-3 py-2.5 text-xs font-semibold text-white hover:bg-amber-600 transition mb-4">
+        <iconify-icon icon="solar:add-circle-bold"></iconify-icon>
+        {{ _('New chat') }}
+      </button>
+
+      <div class="mb-3">
+        <h2 class="font-display font-700 text-slate-900">{{ _('Chat history') }}</h2>
+      </div>
+
+      <div id="conversation-list" class="flex-1 overflow-y-auto space-y-2 pr-1">
+        {% for item in conversations %}
+        <div data-conversation-id="{{ item.id }}"
+             class="conversation-item rounded-2xl border px-3 py-3 transition {{ 'border-amber-300 bg-amber-50/80 shadow-sm' if conversation_id == item.id else 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50' }}">
+          <div class="conversation-head flex items-start justify-between gap-2">
+            <a href="{{ url_for('ai.chat_ui', conversation=item.id) }}"
+               class="conversation-link min-w-0 flex-1 text-sm font-semibold text-slate-800 line-clamp-2 hover:text-amber-700 transition">
+              {{ item.title }}
+            </a>
+            <div class="flex items-center gap-1 flex-shrink-0">
+              <button type="button"
+                      class="rename-chat-btn w-8 h-8 rounded-lg text-slate-500 hover:bg-white hover:text-amber-600 transition"
+                      data-conversation-id="{{ item.id }}"
+                      data-title="{{ item.title|e }}"
+                      title="{{ _('Edit title') }}">
+                <iconify-icon icon="solar:pen-2-linear"></iconify-icon>
+              </button>
+              <button type="button"
+                      class="delete-chat-btn w-8 h-8 rounded-lg text-slate-500 hover:bg-white hover:text-red-600 transition"
+                      data-conversation-id="{{ item.id }}"
+                      title="{{ _('Delete chat') }}">
+                <iconify-icon icon="solar:trash-bin-trash-linear"></iconify-icon>
+              </button>
+              {% if conversation_id == item.id %}
+              <span class="active-dot mt-1 h-2.5 w-2.5 rounded-full bg-amber-500 flex-shrink-0"></span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+        {% if not conversations %}
+        <div id="no-history" class="rounded-2xl border border-dashed border-slate-300 px-4 py-6 text-center text-sm text-slate-500">
+          {{ _('No saved chats yet.') }}
+        </div>
+        {% endif %}
+      </div>
+    </aside>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const chatWindow = document.getElementById('chat-window');
+const chatInput = document.getElementById('chat-input');
+const sendBtn = document.getElementById('send-btn');
+const typingIndicator = document.getElementById('typing-indicator');
+const clearBtn = document.getElementById('clear-btn');
+const newChatBtn = document.getElementById('new-chat-btn');
+const activeConversationTitle = document.getElementById('active-conversation-title');
+const providerText = document.getElementById('provider-text');
+const providerDot = document.getElementById('provider-dot');
+const providerBadge = document.getElementById('provider-badge');
+const providerReason = document.getElementById('provider-reason');
+const conversationList = document.getElementById('conversation-list');
+let activeConversationId = {{ conversation_id if conversation_id else 'null' }};
+let messageCount = {{ history|length }};
+const uiText = {
+  newChat: {{ _('New chat')|tojson }},
+  providerPoweredBy: {{ _('Always available - Powered by {provider}')|tojson }},
+  live: {{ _('Live')|tojson }},
+  offline: {{ _('Offline')|tojson }},
+  welcomeMessage: {{ _('Hello, I am <strong>Kachaf AI</strong>. Ask me anything and I will send your message to OpenRouter.')|tojson }},
+  quickTopics: [
+    {{ _('Knot tying techniques')|tojson }},
+    {{ _('First aid procedures')|tojson }},
+    {{ _('Navigation and orienteering')|tojson }},
+    {{ _('Camping and survival')|tojson }},
+    {{ _('Leadership skills')|tojson }},
+    {{ _('Course recommendations')|tojson }}
+  ],
+  noSavedChatsYet: {{ _('No saved chats yet.')|tojson }},
+  editQuestion: {{ _('Edit question')|tojson }},
+  editTitle: {{ _('Edit title')|tojson }},
+  deleteChat: {{ _('Delete chat')|tojson }},
+  editChatTitle: {{ _('Edit chat title')|tojson }},
+  deleteThisChat: {{ _('Delete this chat?')|tojson }},
+  couldNotRenameChat: {{ _('Could not rename chat')|tojson }},
+  chatTitleUpdated: {{ _('Chat title updated')|tojson }},
+  couldNotDeleteChat: {{ _('Could not delete chat')|tojson }},
+  chatDeleted: {{ _('Chat deleted')|tojson }},
+  editYourQuestion: {{ _('Edit your question')|tojson }},
+  couldNotEditQuestion: {{ _('Could not edit question')|tojson }},
+  openRouterAI: {{ _('OpenRouter AI')|tojson }},
+  openRouterUnavailable: {{ _('OpenRouter is unavailable right now.')|tojson }},
+  connectionErrorWhileReachingServer: {{ _('Connection error while reaching the server.')|tojson }},
+  connectionErrorPleaseTryAgain: {{ _('Connection error. Please try again.')|tojson }},
+  nothingToClearYet: {{ _('Nothing to clear yet')|tojson }},
+  clearCurrentChatHistory: {{ _('Clear the current chat history?')|tojson }},
+  conversationCleared: {{ _('Conversation cleared')|tojson }},
+};
+
+function scrollToBottom() {
+  chatWindow.scrollTop = chatWindow.scrollHeight;
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function truncateText(value, maxLength) {
+  const clean = String(value || '').replace(/\s+/g, ' ').trim();
+  if (!clean) return '';
+  return clean.length > maxLength ? `${clean.slice(0, maxLength)}...` : clean;
+}
+
+function updateProviderStatus(providerLabel, isLive, reason) {
+  providerText.textContent = uiText.providerPoweredBy.replace('{provider}', providerLabel);
+  providerDot.className = `w-2 h-2 rounded-full ${isLive ? 'bg-green-500 animate-pulse' : 'bg-red-400'}`;
+  providerBadge.textContent = isLive ? uiText.live : uiText.offline;
+  providerBadge.className = `ms-auto rounded-full px-3 py-1 text-[11px] font-semibold ${isLive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`;
+  providerReason.textContent = reason || '';
+}
+
+function updateConversationTitle(title) {
+  if (!activeConversationTitle) return;
+  activeConversationTitle.textContent = title || uiText.newChat;
+}
+
+function removeEmptyState() {
+  document.getElementById('empty-state')?.remove();
+}
+
+function renderWelcomeState() {
+  if (document.getElementById('empty-state')) return;
+  const wrapper = document.createElement('div');
+  wrapper.id = 'empty-state';
+  wrapper.className = 'flex items-start gap-3 animate-slide-up';
+  wrapper.innerHTML = `
+    <div class="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center text-lg flex-shrink-0">
+      <iconify-icon icon="solar:chat-round-bold-duotone"></iconify-icon>
+    </div>
+    <div class="bg-white rounded-2xl rounded-ss-sm p-4 shadow-sm border border-slate-100 max-w-[85%]">
+      <p class="text-sm text-slate-700 leading-relaxed">
+        ${uiText.welcomeMessage}
+      </p>
+      <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+        ${uiText.quickTopics
+          .map((topic) => `<button class="quick-btn text-xs px-3 py-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 font-medium hover:bg-amber-100 transition text-start">${escapeHtml(topic)}</button>`)
+          .join('')}
+      </div>
+    </div>
+  `;
+  chatWindow.prepend(wrapper);
+  bindQuickButtons();
+}
+
+function startNewChat() {
+  activeConversationId = null;
+  messageCount = 0;
+  chatWindow.innerHTML = '';
+  renderWelcomeState();
+  updateConversationTitle(uiText.newChat);
+  setActiveConversationItem(null);
+  window.history.replaceState({}, '', `{{ url_for('ai.chat_ui') }}?new=1`);
+  chatInput.value = '';
+  chatInput.style.height = 'auto';
+  chatInput.focus();
+}
+
+function createConversationItem(conversationId, title) {
+  const item = document.createElement('div');
+  item.dataset.conversationId = String(conversationId);
+  item.className = 'conversation-item rounded-2xl border px-3 py-3 transition border-amber-300 bg-amber-50/80 shadow-sm';
+  item.innerHTML = `
+    <div class="conversation-head flex items-start justify-between gap-2">
+      <a href="{{ url_for('ai.chat_ui') }}?conversation=${conversationId}"
+         class="conversation-link min-w-0 flex-1 text-sm font-semibold text-slate-800 line-clamp-2 hover:text-amber-700 transition"></a>
+      <div class="flex items-center gap-1 flex-shrink-0">
+        <button type="button"
+                class="rename-chat-btn w-8 h-8 rounded-lg text-slate-500 hover:bg-white hover:text-amber-600 transition"
+                data-conversation-id="${conversationId}"
+                title="${escapeHtml(uiText.editTitle)}">
+          <iconify-icon icon="solar:pen-2-linear"></iconify-icon>
+        </button>
+        <button type="button"
+                class="delete-chat-btn w-8 h-8 rounded-lg text-slate-500 hover:bg-white hover:text-red-600 transition"
+                data-conversation-id="${conversationId}"
+                title="${escapeHtml(uiText.deleteChat)}">
+          <iconify-icon icon="solar:trash-bin-trash-linear"></iconify-icon>
+        </button>
+        <span class="active-dot mt-1 h-2.5 w-2.5 rounded-full bg-amber-500 flex-shrink-0"></span>
+      </div>
+    </div>
+  `;
+  item.querySelector('.conversation-link').textContent = truncateText(title || uiText.newChat, 60);
+  item.querySelector('.rename-chat-btn').dataset.title = title || uiText.newChat;
+  return item;
+}
+
+function setActiveConversationItem(conversationId) {
+  document.querySelectorAll('.conversation-item').forEach((item) => {
+    const isActive = String(conversationId) === item.dataset.conversationId;
+    item.className = `conversation-item rounded-2xl border px-3 py-3 transition ${isActive ? 'border-amber-300 bg-amber-50/80 shadow-sm' : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'}`;
+    if (isActive && !item.querySelector('.active-dot')) {
+      const dot = document.createElement('span');
+      dot.className = 'active-dot mt-1 h-2.5 w-2.5 rounded-full bg-amber-500 flex-shrink-0';
+      item.querySelector('.conversation-head > div')?.appendChild(dot);
+    }
+    if (!isActive) {
+      item.querySelector('.active-dot')?.remove();
+    }
+  });
+}
+
+function upsertConversationItem(conversationId, title, makeActive = true) {
+  if (!conversationId) return;
+  document.getElementById('no-history')?.remove();
+
+  let item = conversationList.querySelector(`[data-conversation-id="${conversationId}"]`);
+  if (!item) {
+    item = createConversationItem(conversationId, title);
+    conversationList.prepend(item);
+  } else {
+    item.querySelector('.conversation-link').textContent = truncateText(title || uiText.newChat, 60);
+    item.querySelector('.rename-chat-btn').dataset.title = title || uiText.newChat;
+  }
+
+  if (makeActive) {
+    activeConversationId = conversationId;
+    updateConversationTitle(title || uiText.newChat);
+    window.history.replaceState({}, '', `{{ url_for('ai.chat_ui') }}?conversation=${conversationId}`);
+    setActiveConversationItem(conversationId);
+  }
+}
+
+function removeConversationItem(conversationId) {
+  conversationList.querySelector(`[data-conversation-id="${conversationId}"]`)?.remove();
+  if (!conversationList.querySelector('.conversation-item')) {
+    const empty = document.createElement('div');
+    empty.id = 'no-history';
+    empty.className = 'rounded-2xl border border-dashed border-slate-300 px-4 py-6 text-center text-sm text-slate-500';
+    empty.textContent = uiText.noSavedChatsYet;
+    conversationList.appendChild(empty);
+  }
+}
+
+function appendMessage(content, role, messageIndex = null) {
+  removeEmptyState();
+  const isUser = role === 'user';
+  const wrapper = document.createElement('div');
+  wrapper.className = `flex items-start gap-3 ${isUser ? 'justify-end' : ''}`;
+
+  if (isUser) {
+    wrapper.classList.add('user-message-row');
+    wrapper.innerHTML = `
+      <div class="flex flex-col items-end gap-1 max-w-[80%]">
+        <div class="bg-primary-600 text-white rounded-2xl rounded-ee-sm p-3.5 text-sm leading-relaxed whitespace-pre-line w-full">${escapeHtml(content)}</div>
+        <button type="button"
+                class="edit-question-btn inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 hover:text-amber-600 transition"
+                data-message-index="${messageIndex}">
+          <iconify-icon icon="solar:pen-2-linear"></iconify-icon>
+          ${escapeHtml(uiText.editQuestion)}
+        </button>
+      </div>
+      <img src="{{ current_user['avatar_url'] }}" alt="" class="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+    `;
+  } else {
+    wrapper.innerHTML = `
+      <div class="w-8 h-8 rounded-xl bg-amber-100 flex items-center justify-center text-base flex-shrink-0">
+        <iconify-icon icon="solar:chat-round-bold-duotone"></iconify-icon>
+      </div>
+      <div class="bg-white rounded-2xl rounded-ss-sm p-3.5 shadow-sm border border-slate-100 max-w-[85%] text-sm text-slate-700 leading-relaxed whitespace-pre-line">${escapeHtml(content)}</div>
+    `;
+  }
+
+  chatWindow.appendChild(wrapper);
+  scrollToBottom();
+}
+
+function appendErrorMessage(content) {
+  removeEmptyState();
+  const wrapper = document.createElement('div');
+  wrapper.className = 'flex items-start gap-3 animate-slide-up';
+  wrapper.innerHTML = `
+    <div class="w-8 h-8 rounded-xl bg-red-100 flex items-center justify-center text-base flex-shrink-0">
+      <iconify-icon icon="solar:danger-triangle-bold-duotone"></iconify-icon>
+    </div>
+    <div class="bg-red-50 rounded-2xl rounded-ss-sm p-3.5 shadow-sm border border-red-200 max-w-[85%] text-sm text-red-700 leading-relaxed whitespace-pre-line">${escapeHtml(content)}</div>
+  `;
+  chatWindow.appendChild(wrapper);
+  scrollToBottom();
+}
+
+function bindQuickButtons() {
+  document.querySelectorAll('.quick-btn').forEach((btn) => {
+    btn.onclick = () => {
+      chatInput.value = btn.textContent.trim();
+      sendMessage();
+    };
+  });
+}
+
+async function renameConversation(conversationId, currentTitle) {
+  const nextTitle = prompt(uiText.editChatTitle, currentTitle || uiText.newChat);
+  if (nextTitle === null) return;
+
+  const res = await fetch('{{ url_for("ai.rename") }}', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ conversation_id: conversationId, title: nextTitle }),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    showToast(data.error || uiText.couldNotRenameChat, 'danger');
+    return;
+  }
+
+  upsertConversationItem(data.id, data.title, String(activeConversationId) === String(data.id));
+  if (String(activeConversationId) === String(data.id)) {
+    updateConversationTitle(data.title);
+  }
+  showToast(uiText.chatTitleUpdated, 'success');
+}
+
+async function deleteConversation(conversationId) {
+  if (!confirm(uiText.deleteThisChat)) return;
+
+  const res = await fetch('{{ url_for("ai.delete") }}', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ conversation_id: conversationId }),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    showToast(data.error || uiText.couldNotDeleteChat, 'danger');
+    return;
+  }
+
+  removeConversationItem(conversationId);
+  if (String(activeConversationId) === String(conversationId)) {
+    startNewChat();
+  }
+  showToast(uiText.chatDeleted, 'info');
+}
+
+async function editQuestion(button) {
+  if (!activeConversationId) return;
+  const messageIndex = button.dataset.messageIndex;
+  const currentContent = button.parentElement?.querySelector('div')?.textContent?.trim() || '';
+  const nextContent = prompt(uiText.editYourQuestion, currentContent || '');
+  if (nextContent === null) return;
+
+  typingIndicator.classList.remove('hidden');
+  try {
+    const res = await fetch('{{ url_for("ai.edit_message") }}', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        conversation_id: activeConversationId,
+        message_index: messageIndex,
+        message: nextContent,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      showToast(data.error || uiText.couldNotEditQuestion, 'danger');
+      return;
+    }
+
+    updateProviderStatus(data.provider_label || uiText.openRouterAI, !!data.is_live, data.provider_reason || '');
+    upsertConversationItem(data.conversation_id, data.conversation_title || uiText.newChat, true);
+    window.location.assign(`{{ url_for('ai.chat_ui') }}?conversation=${data.conversation_id}`);
+  } finally {
+    typingIndicator.classList.add('hidden');
+  }
+}
+
+chatInput.addEventListener('input', () => {
+  chatInput.style.height = 'auto';
+  chatInput.style.height = Math.min(chatInput.scrollHeight, 128) + 'px';
+});
+
+async function sendMessage() {
+  const msg = chatInput.value.trim();
+  if (!msg) return;
+
+  const userMessageIndex = messageCount;
+  appendMessage(msg, 'user', userMessageIndex);
+  messageCount += 1;
+  chatInput.value = '';
+  chatInput.style.height = 'auto';
+  sendBtn.disabled = true;
+  typingIndicator.classList.remove('hidden');
+  scrollToBottom();
+
+  try {
+    const res = await fetch('{{ url_for("ai.send_message") }}', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: msg, conversation_id: activeConversationId }),
+    });
+    const data = await res.json();
+    typingIndicator.classList.add('hidden');
+    updateProviderStatus(data.provider_label || uiText.openRouterAI, !!data.is_live, data.provider_reason || '');
+
+    if (data.conversation_id) {
+      upsertConversationItem(data.conversation_id, data.conversation_title || msg, true);
+    }
+
+    if (!res.ok) {
+      appendErrorMessage(data.error || uiText.openRouterUnavailable);
+      return;
+    }
+
+    appendMessage(data.reply, 'assistant');
+    messageCount += 1;
+  } catch (err) {
+    typingIndicator.classList.add('hidden');
+    updateProviderStatus(uiText.openRouterAI, false, uiText.connectionErrorWhileReachingServer);
+    appendErrorMessage(uiText.connectionErrorPleaseTryAgain);
+  } finally {
+    sendBtn.disabled = false;
+    chatInput.focus();
+  }
+}
+
+sendBtn.addEventListener('click', sendMessage);
+chatInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
+
+clearBtn?.addEventListener('click', async () => {
+  if (!activeConversationId) {
+    chatWindow.innerHTML = '';
+    messageCount = 0;
+    renderWelcomeState();
+    showToast(uiText.nothingToClearYet, 'info');
+    return;
+  }
+  if (!confirm(uiText.clearCurrentChatHistory)) return;
+
+  await fetch('{{ url_for("ai.clear") }}', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ conversation_id: activeConversationId }),
+  });
+
+  chatWindow.innerHTML = '';
+  messageCount = 0;
+  renderWelcomeState();
+  updateConversationTitle(uiText.newChat);
+  showToast(uiText.conversationCleared, 'info');
+});
+
+newChatBtn?.addEventListener('click', (event) => {
+  event.preventDefault();
+  startNewChat();
+});
+
+conversationList?.addEventListener('click', (event) => {
+  const renameBtn = event.target.closest('.rename-chat-btn');
+  if (renameBtn) {
+    event.preventDefault();
+    event.stopPropagation();
+    renameConversation(renameBtn.dataset.conversationId, renameBtn.dataset.title || '');
+    return;
+  }
+
+  const deleteBtn = event.target.closest('.delete-chat-btn');
+  if (deleteBtn) {
+    event.preventDefault();
+    event.stopPropagation();
+    deleteConversation(deleteBtn.dataset.conversationId);
+  }
+});
+
+chatWindow?.addEventListener('click', (event) => {
+  const editBtn = event.target.closest('.edit-question-btn');
+  if (!editBtn) return;
+  event.preventDefault();
+  editQuestion(editBtn);
+});
+
+bindQuickButtons();
+setActiveConversationItem(activeConversationId);
+scrollToBottom();
+</script>
+{% endblock %}

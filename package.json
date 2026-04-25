@@ -1,0 +1,12 @@
+{
+  "name": "kechafa-assets",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build:css": "tailwindcss -i ./static/css/input.css -o ./static/css/main.css --minify",
+    "watch:css": "tailwindcss -i ./static/css/input.css -o ./static/css/main.css --watch"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.4"
+  }
+}

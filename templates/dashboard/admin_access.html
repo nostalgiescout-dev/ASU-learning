@@ -1,0 +1,366 @@
+{% extends "base.html" %}
+{% block title %}Grant Access{% endblock %}
+
+{% block content %}
+<div class="max-w-screen-xl mx-auto px-4 py-6 lg:px-8">
+  <div class="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+    <div>
+      <h1 class="font-display font-800 text-2xl text-slate-900">Grant Access</h1>
+      <p class="text-slate-500 text-sm">Search an existing user, then grant course or book access in bulk or one by one.</p>
+    </div>
+    <a href="{{ url_for('admin.dashboard') }}" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-primary-300">
+      <iconify-icon icon="solar:arrow-left-linear" class="text-base"></iconify-icon>
+      Back to admin
+    </a>
+  </div>
+
+  <div class="card p-5 mb-6">
+    <form method="GET" action="{{ url_for('admin.grant_access') }}" class="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)_auto]">
+      <div>
+        <label class="mb-1 block text-xs font-semibold text-slate-600">Search User</label>
+        <div class="relative">
+          <iconify-icon icon="solar:magnifer-linear" class="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 text-lg text-slate-400"></iconify-icon>
+          <input type="text"
+                 name="user_q"
+                 value="{{ user_q }}"
+                 placeholder="Name, username, or email"
+                 class="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 ps-10 pe-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-400" />
+        </div>
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-semibold text-slate-600">Select User</label>
+        <select name="user_id"
+                class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-400">
+          <option value="">Choose a user</option>
+          {% for user in users %}
+          <option value="{{ user.id }}" {{ 'selected' if selected_user and selected_user.id == user.id else '' }}>
+            {{ user.full_name or user.username }} (@{{ user.username }}) - {{ user.role }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <button type="submit" class="rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-700">
+        Load Access
+      </button>
+    </form>
+    <div class="mt-3 text-xs text-slate-400">
+      {% if user_q %}
+      {{ users|length }} matching users for "{{ user_q }}"
+      {% else %}
+      {{ users|length }} users available
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="card p-5 mb-6">
+    <div class="mb-4 flex items-start justify-between gap-4">
+      <div>
+        <h2 class="font-display font-700 text-slate-900">Pending Course Requests</h2>
+        <p class="text-sm text-slate-500">Approve or refuse scout requests for course access.</p>
+      </div>
+      <span class="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">{{ pending_course_requests|length }} pending</span>
+    </div>
+
+    <div class="space-y-3">
+      {% for req in pending_course_requests %}
+      <div class="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div class="min-w-0">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="text-sm font-semibold text-slate-800">{{ req.full_name or req.username }}</span>
+              <span class="text-xs text-slate-400">@{{ req.username }}</span>
+              <span class="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-slate-600">{{ req.category_name or 'Course' }}</span>
+            </div>
+            <p class="mt-2 text-sm text-slate-700">Requested: <strong>{{ req.course_title }}</strong></p>
+            <p class="mt-1 text-xs text-slate-400">{{ req.email }} | {{ (req.created_at or '')[:16]|replace('T', ' ') }}</p>
+            {% if req.note %}
+            <div class="mt-3 rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-600">
+              {{ req.note }}
+            </div>
+            {% endif %}
+          </div>
+
+          <div class="flex flex-wrap gap-2">
+            <form method="GET" action="{{ url_for('admin.grant_access') }}">
+              <input type="hidden" name="user_id" value="{{ req.requester_id }}" />
+              <button type="submit" class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-primary-300 hover:text-primary-700">
+                Open user
+              </button>
+            </form>
+            <form method="POST" action="{{ url_for('admin.grant_access') }}">
+              <input type="hidden" name="action" value="approve_course_request" />
+              <input type="hidden" name="request_id" value="{{ req.id }}" />
+              <input type="hidden" name="user_id" value="{{ req.requester_id }}" />
+              <input type="hidden" name="user_q" value="{{ user_q }}" />
+              <input type="hidden" name="course_q" value="{{ course_q }}" />
+              <input type="hidden" name="book_q" value="{{ book_q }}" />
+              <button type="submit" class="rounded-xl bg-primary-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-primary-700">
+                Accept
+              </button>
+            </form>
+            <form method="POST" action="{{ url_for('admin.grant_access') }}">
+              <input type="hidden" name="action" value="reject_course_request" />
+              <input type="hidden" name="request_id" value="{{ req.id }}" />
+              <input type="hidden" name="user_id" value="{{ req.requester_id }}" />
+              <input type="hidden" name="user_q" value="{{ user_q }}" />
+              <input type="hidden" name="course_q" value="{{ course_q }}" />
+              <input type="hidden" name="book_q" value="{{ book_q }}" />
+              <button type="submit" class="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 transition hover:bg-red-100">
+                Refuse
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+      {% else %}
+      <div class="rounded-xl border border-dashed border-slate-300 px-4 py-4 text-sm text-slate-500">
+        No pending course requests right now.
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  {% if selected_user %}
+  <div class="card p-5 mb-6">
+    <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+      <div>
+        <h2 class="font-display font-700 text-slate-900">{{ selected_user.full_name or selected_user.username }}</h2>
+        <div class="mt-2 flex flex-wrap gap-3 text-sm text-slate-500">
+          <span>@{{ selected_user.username }}</span>
+          <span>{{ selected_user.email }}</span>
+          <span class="capitalize">{{ selected_user.role }}</span>
+        </div>
+      </div>
+      <div class="rounded-2xl bg-primary-50 px-4 py-3 text-sm text-primary-700">
+        Access changes are saved immediately.
+      </div>
+    </div>
+  </div>
+
+  <div class="grid gap-6 lg:grid-cols-2">
+    <div class="card p-5">
+      <div class="mb-4 flex items-start justify-between gap-4">
+        <div>
+          <h2 class="font-display font-700 text-slate-900">Course Access</h2>
+          <p class="text-sm text-slate-500">Grant, search, and review course access for this user.</p>
+        </div>
+        <span class="rounded-full bg-primary-50 px-3 py-1 text-xs font-semibold text-primary-700">{{ assigned_courses|length }} assigned</span>
+      </div>
+
+      <form method="GET" action="{{ url_for('admin.grant_access') }}" class="mb-5">
+        <input type="hidden" name="user_id" value="{{ selected_user.id }}" />
+        <input type="hidden" name="user_q" value="{{ user_q }}" />
+        <input type="hidden" name="book_q" value="{{ book_q }}" />
+        <label class="mb-1 block text-xs font-semibold text-slate-600">Search Courses</label>
+        <div class="flex gap-2">
+          <div class="relative flex-1">
+            <iconify-icon icon="solar:magnifer-linear" class="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 text-lg text-slate-400"></iconify-icon>
+            <input type="text"
+                   name="course_q"
+                   value="{{ course_q }}"
+                   placeholder="Search by title or category"
+                   class="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 ps-10 pe-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-400" />
+          </div>
+          <button type="submit" class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:border-primary-300">
+            Apply
+          </button>
+        </div>
+      </form>
+
+      <div class="mb-6">
+        <h3 class="mb-3 text-sm font-semibold text-slate-700">Assigned Courses</h3>
+        <div class="space-y-3">
+          {% for course in assigned_courses %}
+          <div class="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3">
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <p class="truncate text-sm font-semibold text-slate-800">{{ course.title }}</p>
+                <p class="text-xs text-slate-500">{{ course.category_name or course.category }}</p>
+                <p class="mt-1 text-xs text-slate-400">
+                  Granted by {{ course.granted_by_name or 'System / legacy access' }} on {{ (course.granted_at or '')[:16]|replace('T', ' ') }}
+                </p>
+              </div>
+              <form method="POST" action="{{ url_for('admin.grant_access') }}">
+                <input type="hidden" name="action" value="revoke_course" />
+                <input type="hidden" name="user_id" value="{{ selected_user.id }}" />
+                <input type="hidden" name="user_q" value="{{ user_q }}" />
+                <input type="hidden" name="course_q" value="{{ course_q }}" />
+                <input type="hidden" name="book_q" value="{{ book_q }}" />
+                <input type="hidden" name="course_id" value="{{ course.id }}" />
+                <button type="submit" class="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 transition hover:bg-red-100">
+                  Remove
+                </button>
+              </form>
+            </div>
+          </div>
+          {% else %}
+          <div class="rounded-xl border border-dashed border-slate-300 px-4 py-4 text-sm text-slate-500">
+            No course access assigned yet.
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div>
+        <div class="mb-3 flex items-center justify-between gap-3">
+          <h3 class="text-sm font-semibold text-slate-700">Available Courses</h3>
+          <span class="text-xs text-slate-400">{{ available_courses|length }} available</span>
+        </div>
+        <form method="POST" action="{{ url_for('admin.grant_access') }}">
+          <input type="hidden" name="user_id" value="{{ selected_user.id }}" />
+          <input type="hidden" name="user_q" value="{{ user_q }}" />
+          <input type="hidden" name="course_q" value="{{ course_q }}" />
+          <input type="hidden" name="book_q" value="{{ book_q }}" />
+          <div class="mb-3 flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-white px-4 py-3">
+            <label class="flex items-center gap-2 text-sm text-slate-600">
+              <input type="checkbox" data-check-all="courses" class="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500" />
+              Select all visible
+            </label>
+            <button type="submit" name="action" value="bulk_grant_courses" class="rounded-xl bg-primary-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-primary-700">
+              Grant selected
+            </button>
+          </div>
+
+          <div class="space-y-2 max-h-80 overflow-y-auto pr-1">
+            {% for course in available_courses %}
+            <div class="rounded-2xl border border-slate-100 px-4 py-3">
+              <label class="flex min-w-0 flex-1 items-start gap-3">
+                <input type="checkbox" name="course_ids" value="{{ course.id }}" data-checkbox-group="courses" class="mt-0.5 h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500" />
+                <span class="min-w-0">
+                  <span class="block truncate text-sm font-semibold text-slate-800">{{ course.title }}</span>
+                  <span class="block text-xs text-slate-500">{{ course.category_name or course.category }}</span>
+                </span>
+              </label>
+            </div>
+            {% else %}
+            <div class="rounded-xl border border-dashed border-slate-300 px-4 py-4 text-sm text-slate-500">
+              No more courses to assign.
+            </div>
+            {% endfor %}
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="card p-5">
+      <div class="mb-4 flex items-start justify-between gap-4">
+        <div>
+          <h2 class="font-display font-700 text-slate-900">Book Access</h2>
+          <p class="text-sm text-slate-500">Grant, search, and review library access for this user.</p>
+        </div>
+        <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">{{ assigned_books|length }} assigned</span>
+      </div>
+
+      <form method="GET" action="{{ url_for('admin.grant_access') }}" class="mb-5">
+        <input type="hidden" name="user_id" value="{{ selected_user.id }}" />
+        <input type="hidden" name="user_q" value="{{ user_q }}" />
+        <input type="hidden" name="course_q" value="{{ course_q }}" />
+        <label class="mb-1 block text-xs font-semibold text-slate-600">Search Books</label>
+        <div class="flex gap-2">
+          <div class="relative flex-1">
+            <iconify-icon icon="solar:magnifer-linear" class="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2 text-lg text-slate-400"></iconify-icon>
+            <input type="text"
+                   name="book_q"
+                   value="{{ book_q }}"
+                   placeholder="Search by title, category, or language"
+                   class="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 ps-10 pe-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-400" />
+          </div>
+          <button type="submit" class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:border-primary-300">
+            Apply
+          </button>
+        </div>
+      </form>
+
+      <div class="mb-6">
+        <h3 class="mb-3 text-sm font-semibold text-slate-700">Assigned Books</h3>
+        <div class="space-y-3">
+          {% for book in assigned_books %}
+          <div class="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3">
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <p class="truncate text-sm font-semibold text-slate-800">{{ book.title }}</p>
+                <p class="text-xs text-slate-500">{{ book.category_name or 'General' }} | {{ book.language.upper() }}</p>
+                <p class="mt-1 text-xs text-slate-400">
+                  Granted by {{ book.granted_by_name or 'System / legacy access' }} on {{ (book.granted_at or '')[:16]|replace('T', ' ') }}
+                </p>
+              </div>
+              <form method="POST" action="{{ url_for('admin.grant_access') }}">
+                <input type="hidden" name="action" value="revoke_book" />
+                <input type="hidden" name="user_id" value="{{ selected_user.id }}" />
+                <input type="hidden" name="user_q" value="{{ user_q }}" />
+                <input type="hidden" name="course_q" value="{{ course_q }}" />
+                <input type="hidden" name="book_q" value="{{ book_q }}" />
+                <input type="hidden" name="book_id" value="{{ book.id }}" />
+                <button type="submit" class="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 transition hover:bg-red-100">
+                  Remove
+                </button>
+              </form>
+            </div>
+          </div>
+          {% else %}
+          <div class="rounded-xl border border-dashed border-slate-300 px-4 py-4 text-sm text-slate-500">
+            No book access assigned yet.
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div>
+        <div class="mb-3 flex items-center justify-between gap-3">
+          <h3 class="text-sm font-semibold text-slate-700">Available Books</h3>
+          <span class="text-xs text-slate-400">{{ available_books|length }} available</span>
+        </div>
+        <form method="POST" action="{{ url_for('admin.grant_access') }}">
+          <input type="hidden" name="user_id" value="{{ selected_user.id }}" />
+          <input type="hidden" name="user_q" value="{{ user_q }}" />
+          <input type="hidden" name="course_q" value="{{ course_q }}" />
+          <input type="hidden" name="book_q" value="{{ book_q }}" />
+          <div class="mb-3 flex items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-white px-4 py-3">
+            <label class="flex items-center gap-2 text-sm text-slate-600">
+              <input type="checkbox" data-check-all="books" class="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500" />
+              Select all visible
+            </label>
+            <button type="submit" name="action" value="bulk_grant_books" class="rounded-xl bg-primary-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-primary-700">
+              Grant selected
+            </button>
+          </div>
+
+          <div class="space-y-2 max-h-80 overflow-y-auto pr-1">
+            {% for book in available_books %}
+            <div class="rounded-2xl border border-slate-100 px-4 py-3">
+              <label class="flex min-w-0 flex-1 items-start gap-3">
+                <input type="checkbox" name="book_ids" value="{{ book.id }}" data-checkbox-group="books" class="mt-0.5 h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500" />
+                <span class="min-w-0">
+                  <span class="block truncate text-sm font-semibold text-slate-800">{{ book.title }}</span>
+                  <span class="block text-xs text-slate-500">{{ book.category_name or 'General' }} | {{ book.language.upper() }}</span>
+                </span>
+              </label>
+            </div>
+            {% else %}
+            <div class="rounded-xl border border-dashed border-slate-300 px-4 py-4 text-sm text-slate-500">
+              No more books to assign.
+            </div>
+            {% endfor %}
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('[data-check-all]').forEach((toggle) => {
+    toggle.addEventListener('change', () => {
+      const group = toggle.dataset.checkAll;
+      document.querySelectorAll(`[data-checkbox-group="${group}"]`).forEach((checkbox) => {
+        checkbox.checked = toggle.checked;
+      });
+    });
+  });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Manage Book Categories') }} - {{ _('Only Scouts Academy') }}{% endblock %}
+
+{% block content %}
+<div class="max-w-screen-xl mx-auto px-4 py-6 lg:px-8">
+  <div class="mb-6 flex items-center justify-between gap-4">
+    <div>
+      <h1 class="font-display font-800 text-2xl text-slate-900">{{ _('Manage Book Categories') }}</h1>
+      <p class="mt-1 text-sm text-slate-500">{{ _('Create categories first, then place each uploaded PDF inside the correct collection.') }}</p>
+    </div>
+    <a href="{{ url_for('library.index') }}" class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-primary-300">
+      Back to Library
+    </a>
+  </div>
+
+  <div class="grid gap-6 lg:grid-cols-[360px_minmax(0,1fr)]">
+    <div class="card p-6">
+      <h2 class="text-lg font-semibold text-slate-900">Add Category</h2>
+      <form method="POST" class="mt-5 space-y-4">
+        <div>
+          <label class="mb-1.5 block text-sm font-semibold text-slate-700">{{ _('Category Name') }}</label>
+          <input type="text" name="name" required class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400" placeholder="{{ _('First Aid') }}" />
+        </div>
+        <div>
+          <label class="mb-1.5 block text-sm font-semibold text-slate-700">{{ _('Description') }}</label>
+          <textarea name="description" rows="4" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400" placeholder="{{ _('Short description for this category') }}"></textarea>
+        </div>
+        <button type="submit" class="w-full rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700">
+          {{ _('Create Category') }}
+        </button>
+      </form>
+    </div>
+
+    <div class="card overflow-hidden">
+      <div class="border-b border-slate-100 px-5 py-4">
+        <h2 class="text-lg font-semibold text-slate-900">Existing Categories</h2>
+      </div>
+      {% if categories %}
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="border-b border-slate-100 bg-slate-50">
+              <tr>
+                <th class="px-5 py-3 text-start text-xs font-semibold uppercase tracking-wide text-slate-500">{{ _('Name') }}</th>
+                <th class="px-5 py-3 text-start text-xs font-semibold uppercase tracking-wide text-slate-500">{{ _('Slug') }}</th>
+                <th class="px-5 py-3 text-start text-xs font-semibold uppercase tracking-wide text-slate-500">{{ _('Books') }}</th>
+                <th class="px-5 py-3 text-start text-xs font-semibold uppercase tracking-wide text-slate-500">{{ _('Actions') }}</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-50">
+              {% for category in categories %}
+                <tr class="hover:bg-slate-50 transition">
+                  <td class="px-5 py-4">
+                    <div class="font-semibold text-slate-800">{{ category.name }}</div>
+                    <div class="mt-1 text-xs text-slate-400">{{ category.description or _('No description yet.') }}</div>
+                  </td>
+                  <td class="px-5 py-4 text-slate-500">{{ category.slug }}</td>
+                  <td class="px-5 py-4">
+                    <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500">{{ category.book_count }}</span>
+                  </td>
+                  <td class="px-5 py-4">
+                    <div class="flex flex-wrap gap-2">
+                      <a href="{{ url_for('library.index', category=category.id) }}" class="rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-primary hover:text-primary">
+                        {{ _('View Books') }}
+                      </a>
+                      <a href="{{ url_for('library.edit_category', category_id=category.id) }}" class="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700 transition hover:bg-amber-100">
+                        Edit
+                      </a>
+                      <form method="POST" action="{{ url_for('library.delete_category', category_id=category.id) }}" onsubmit="return confirm({{ _('Delete this category?')|tojson }});">
+                        <button type="submit" class="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 transition hover:bg-red-100">
+                          Delete
+                        </button>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="p-8 text-center text-sm text-slate-500">{{ _('No categories yet.') }}</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

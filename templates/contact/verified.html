@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block title %}Message Verified{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-md px-4 py-16 text-center">
+
+  {% if already %}
+  <div class="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-slate-100">
+    <iconify-icon icon="solar:check-circle-bold-duotone" class="text-4xl text-slate-400"></iconify-icon>
+  </div>
+  <h1 class="font-display text-2xl font-extrabold text-slate-900 mb-2">Already Verified</h1>
+  <p class="text-sm text-slate-500">This message was already verified. No action needed.</p>
+
+  {% else %}
+  <div class="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-3xl"
+       style="background:linear-gradient(135deg,#7c3aed,#a855f7);">
+    <iconify-icon icon="solar:check-circle-bold-duotone" class="text-4xl text-white"></iconify-icon>
+  </div>
+  <h1 class="font-display text-2xl font-extrabold text-slate-900 mb-2">
+    Thank you{% if name %}, {{ name }}{% endif %}!
+  </h1>
+  <p class="text-sm text-slate-500">
+    Your message has been verified and submitted. We'll get back to you soon.
+  </p>
+  {% endif %}
+
+  <a href="{{ url_for('dashboard.feed') }}"
+     class="mt-8 inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition hover:opacity-90"
+     style="background:linear-gradient(90deg,#7c3aed,#a855f7); color:#fff;">
+    <iconify-icon icon="solar:home-2-bold"></iconify-icon>
+    Go to Feed
+  </a>
+</div>
+{% endblock %}

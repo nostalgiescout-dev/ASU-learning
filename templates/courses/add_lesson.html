@@ -1,0 +1,348 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit Lesson' if is_edit else 'Add Lesson' }}{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 py-6 lg:px-8">
+  <div class="mb-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+    <div>
+      <p class="text-xs font-semibold uppercase tracking-[0.18em] text-primary-600">Course Builder</p>
+      <h1 class="font-display font-800 text-2xl text-slate-900 mt-1">{{ 'Edit Lesson' if is_edit else 'Add Lesson' }}</h1>
+      <p class="text-slate-500 text-sm mt-1">
+        {{ 'Update lesson details for' if is_edit else 'Add a new lesson to' }} <span class="font-semibold text-slate-700">{{ course['title'] }}</span>.
+      </p>
+    </div>
+    <a href="{{ url_for('courses.detail', course_id=course['id']) }}"
+       class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-primary-300">
+      Back to course
+    </a>
+  </div>
+
+  <div class="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
+    <div class="rounded-2xl border border-slate-200 bg-white px-4 py-3">
+      <p class="text-xs uppercase tracking-wide text-slate-400">Existing lessons</p>
+      <p class="mt-1 text-2xl font-800 text-slate-900">{{ lesson_count }}</p>
+    </div>
+    <div class="rounded-2xl border border-slate-200 bg-white px-4 py-3">
+      <p class="text-xs uppercase tracking-wide text-slate-400">Suggested order</p>
+      <p class="mt-1 text-2xl font-800 text-slate-900">{{ next_order }}</p>
+    </div>
+    <div class="rounded-2xl border border-slate-200 bg-white px-4 py-3">
+      <p class="text-xs uppercase tracking-wide text-slate-400">Course XP</p>
+      <p class="mt-1 text-2xl font-800 text-primary-700">+{{ course['xp_reward'] }}</p>
+    </div>
+  </div>
+
+  <div class="card p-6">
+    <form method="POST" action="{{ url_for('courses.edit_lesson', course_id=course['id'], video_id=lesson['id']) if is_edit else url_for('courses.add_lesson', course_id=course['id']) }}" enctype="multipart/form-data" class="space-y-5">
+      <div>
+        <label class="mb-1.5 block text-sm font-semibold text-slate-700">Lesson title</label>
+        <input type="text" name="title" required value="{{ form_data.get('title', '') }}"
+               class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400"
+               placeholder="Lesson 1 - Introduction to first aid" />
+      </div>
+
+      <div>
+        <label class="mb-2 block text-sm font-semibold text-slate-700">Video source</label>
+        <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <label class="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+            <input type="radio" name="video_source" value="link" {{ 'checked' if form_data.get('video_source', 'link') == 'link' else '' }}
+                   class="mt-1 accent-primary-600" />
+            <span>
+              <span class="block font-semibold text-slate-800">Use video link</span>
+              <span class="block text-xs text-slate-500">Paste a hosted video URL.</span>
+            </span>
+          </label>
+          <label class="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+            <input type="radio" name="video_source" value="upload" {{ 'checked' if form_data.get('video_source') == 'upload' else '' }}
+                   class="mt-1 accent-primary-600" />
+            <span>
+              <span class="block font-semibold text-slate-800">Upload from computer</span>
+              <span class="block text-xs text-slate-500">Supported: MP4, MOV, WEBM, M4V.</span>
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <div id="video-link-panel">
+        <label class="mb-1.5 block text-sm font-semibold text-slate-700">Video URL</label>
+        <input type="url" name="video_url" value="{{ form_data.get('video_url', '') }}"
+               class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400"
+               placeholder="https://example.com/lesson-video.mp4" />
+      </div>
+
+      <div id="video-upload-panel">
+        <label class="mb-1.5 block text-sm font-semibold text-slate-700">Upload video</label>
+        <input type="file" name="video_file" accept=".mp4,.mov,.webm,.m4v,video/mp4,video/quicktime,video/webm"
+               class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 file:mr-4 file:rounded-lg file:border-0 file:bg-primary-600 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-primary-700" />
+        <p class="mt-2 text-xs text-slate-500">{{ 'Choose a new file only if you want to replace the current lesson video.' if is_edit else 'Upload a local lesson video if you do not have a public link yet.' }}</p>
+      </div>
+
+      <div>
+        <label class="mb-1.5 block text-sm font-semibold text-slate-700">Description</label>
+        <textarea name="description" rows="5"
+                  class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400"
+                  placeholder="Explain what learners should understand by the end of this lesson...">{{ form_data.get('description', '') }}</textarea>
+      </div>
+
+      <div>
+        <label class="mb-1.5 block text-sm font-semibold text-slate-700">Thumbnail URL</label>
+        <input type="url" name="thumbnail_url" value="{{ form_data.get('thumbnail_url', '') }}"
+               class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400"
+               placeholder="https://example.com/lesson-cover.jpg" />
+      </div>
+
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div>
+          <label class="mb-1.5 block text-sm font-semibold text-slate-700">Duration (seconds)</label>
+          <input type="number" name="duration_secs" min="0" value="{{ form_data.get('duration_secs', 300) }}"
+                 class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400" />
+        </div>
+        <div>
+          <label class="mb-1.5 block text-sm font-semibold text-slate-700">Lesson order</label>
+          <input type="number" name="order_index" min="0" value="{{ form_data.get('order_index', next_order) }}"
+                 class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400" />
+        </div>
+        <div>
+          <label class="mb-1.5 block text-sm font-semibold text-slate-700">XP reward</label>
+          <input type="number" name="xp_reward" min="0" value="{{ form_data.get('xp_reward', 50) }}"
+                 class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400" />
+        </div>
+      </div>
+
+      <label class="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+        <input type="checkbox" name="is_published" {{ 'checked' if form_data.get('is_published') else '' }}
+               class="rounded accent-primary-600" />
+        Publish this lesson now
+      </label>
+
+      <div id="quiz-builder" class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+        <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-primary-600">Optional Quiz</p>
+            <p class="mt-1 text-sm text-slate-500">Add one or more quiz questions. Learners must answer all of them correctly on the lesson page.</p>
+            <p class="mt-1 text-xs text-slate-400">Leave every quiz field empty if this lesson should not have a quiz.</p>
+          </div>
+          <button type="button" id="add-quiz-question"
+                  class="inline-flex items-center justify-center rounded-xl border border-primary-200 bg-primary-50 px-4 py-2.5 text-sm font-semibold text-primary-700 transition hover:bg-primary-100">
+            Add 
+          </button>
+        </div>
+
+        <div id="quiz-question-list" class="space-y-4">
+          {% for quiz in form_data.get('quiz_questions', []) %}
+          <div class="rounded-2xl border border-slate-200 bg-white p-4" data-quiz-card>
+            <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <p class="text-xs font-semibold uppercase tracking-[0.18em] text-primary-600" data-quiz-number>Question {{ loop.index }}</p>
+                <p class="mt-1 text-sm text-slate-500">Build a clear multiple-choice question for this lesson.</p>
+              </div>
+              <button type="button" data-remove-quiz-question
+                      class="inline-flex items-center justify-center rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100">
+                Remove
+              </button>
+            </div>
+
+            <div class="space-y-4">
+              <div>
+                <label class="mb-1.5 block text-sm font-semibold text-slate-700">Quiz question</label>
+                <input type="text" name="quiz_question[]" value="{{ quiz.get('quiz_question', '') }}"
+                       class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400"
+                       placeholder="What is the safest first step in this lesson?" />
+              </div>
+
+              <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div>
+                  <label class="mb-1.5 block text-sm font-semibold text-slate-700">Option A</label>
+                  <input type="text" name="quiz_option_a[]" value="{{ quiz.get('quiz_option_a', '') }}"
+                         class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400" />
+                </div>
+                <div>
+                  <label class="mb-1.5 block text-sm font-semibold text-slate-700">Option B</label>
+                  <input type="text" name="quiz_option_b[]" value="{{ quiz.get('quiz_option_b', '') }}"
+                         class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400" />
+                </div>
+                <div>
+                  <label class="mb-1.5 block text-sm font-semibold text-slate-700">Option C</label>
+                  <input type="text" name="quiz_option_c[]" value="{{ quiz.get('quiz_option_c', '') }}"
+                         class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400" />
+                </div>
+                <div>
+                  <label class="mb-1.5 block text-sm font-semibold text-slate-700">Option D</label>
+                  <input type="text" name="quiz_option_d[]" value="{{ quiz.get('quiz_option_d', '') }}"
+                         class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400" />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div>
+                  <label class="mb-1.5 block text-sm font-semibold text-slate-700">Correct answer</label>
+                  <select name="quiz_correct_option[]"
+                          class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400">
+                    <option value="">No quiz</option>
+                    <option value="a" {{ 'selected' if quiz.get('quiz_correct_option') == 'a' else '' }}>Option A</option>
+                    <option value="b" {{ 'selected' if quiz.get('quiz_correct_option') == 'b' else '' }}>Option B</option>
+                    <option value="c" {{ 'selected' if quiz.get('quiz_correct_option') == 'c' else '' }}>Option C</option>
+                    <option value="d" {{ 'selected' if quiz.get('quiz_correct_option') == 'd' else '' }}>Option D</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="mb-1.5 block text-sm font-semibold text-slate-700">Explanation</label>
+                  <input type="text" name="quiz_explanation[]" value="{{ quiz.get('quiz_explanation', '') }}"
+                         class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400"
+                         placeholder="Explain why the correct answer is right." />
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:justify-end">
+        <a href="{{ url_for('courses.detail', course_id=course['id']) }}"
+           class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:border-primary-300">
+          Cancel
+        </a>
+        {% if is_edit %}
+        <button type="submit"
+                class="inline-flex items-center justify-center rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-700">
+          Save changes
+        </button>
+        {% else %}
+        <button type="submit" name="add_another" value="1"
+                class="inline-flex items-center justify-center rounded-xl border border-primary-200 bg-primary-50 px-5 py-2.5 text-sm font-semibold text-primary-700 transition hover:bg-primary-100">
+          Add and continue
+        </button>
+        <button type="submit"
+                class="inline-flex items-center justify-center rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-700">
+          Save lesson
+        </button>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+</div>
+
+<template id="quiz-question-template">
+  <div class="rounded-2xl border border-slate-200 bg-white p-4" data-quiz-card>
+    <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-primary-600" data-quiz-number>Question</p>
+        <p class="mt-1 text-sm text-slate-500">Build a clear multiple-choice question for this lesson.</p>
+      </div>
+      <button type="button" data-remove-quiz-question
+              class="inline-flex items-center justify-center rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100">
+        Remove
+      </button>
+    </div>
+
+    <div class="space-y-4">
+      <div>
+        <label class="mb-1.5 block text-sm font-semibold text-slate-700">Quiz question</label>
+        <input type="text" name="quiz_question[]"
+               class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400"
+               placeholder="What is the safest first step in this lesson?" />
+      </div>
+
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div>
+          <label class="mb-1.5 block text-sm font-semibold text-slate-700">Option A</label>
+          <input type="text" name="quiz_option_a[]"
+                 class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400" />
+        </div>
+        <div>
+          <label class="mb-1.5 block text-sm font-semibold text-slate-700">Option B</label>
+          <input type="text" name="quiz_option_b[]"
+                 class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400" />
+        </div>
+        <div>
+          <label class="mb-1.5 block text-sm font-semibold text-slate-700">Option C</label>
+          <input type="text" name="quiz_option_c[]"
+                 class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400" />
+        </div>
+        <div>
+          <label class="mb-1.5 block text-sm font-semibold text-slate-700">Option D</label>
+          <input type="text" name="quiz_option_d[]"
+                 class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400" />
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div>
+          <label class="mb-1.5 block text-sm font-semibold text-slate-700">Correct answer</label>
+          <select name="quiz_correct_option[]"
+                  class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400">
+            <option value="">No quiz</option>
+            <option value="a">Option A</option>
+            <option value="b">Option B</option>
+            <option value="c">Option C</option>
+            <option value="d">Option D</option>
+          </select>
+        </div>
+        <div>
+          <label class="mb-1.5 block text-sm font-semibold text-slate-700">Explanation</label>
+          <input type="text" name="quiz_explanation[]"
+                 class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400"
+                 placeholder="Explain why the correct answer is right." />
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+  (function () {
+    const sourceInputs = document.querySelectorAll('input[name="video_source"]');
+    const linkPanel = document.getElementById('video-link-panel');
+    const uploadPanel = document.getElementById('video-upload-panel');
+    const quizList = document.getElementById('quiz-question-list');
+    const addQuizButton = document.getElementById('add-quiz-question');
+    const quizTemplate = document.getElementById('quiz-question-template');
+
+    function syncVideoSource() {
+      const selected = document.querySelector('input[name="video_source"]:checked')?.value || 'link';
+      linkPanel.style.display = selected === 'link' ? '' : 'none';
+      uploadPanel.style.display = selected === 'upload' ? '' : 'none';
+    }
+
+    function syncQuizCards() {
+      const cards = Array.from(quizList.querySelectorAll('[data-quiz-card]'));
+      cards.forEach((card, index) => {
+        const label = card.querySelector('[data-quiz-number]');
+        const removeButton = card.querySelector('[data-remove-quiz-question]');
+        if (label) {
+          label.textContent = `Question ${index + 1}`;
+        }
+        if (removeButton) {
+          removeButton.hidden = cards.length === 1;
+        }
+      });
+    }
+
+    addQuizButton?.addEventListener('click', () => {
+      if (!quizTemplate || !quizList) {
+        return;
+      }
+      quizList.appendChild(quizTemplate.content.cloneNode(true));
+      syncQuizCards();
+    });
+
+    quizList?.addEventListener('click', (event) => {
+      const removeButton = event.target.closest('[data-remove-quiz-question]');
+      if (!removeButton) {
+        return;
+      }
+      const cards = quizList.querySelectorAll('[data-quiz-card]');
+      if (cards.length <= 1) {
+        return;
+      }
+      removeButton.closest('[data-quiz-card]')?.remove();
+      syncQuizCards();
+    });
+
+    sourceInputs.forEach((input) => input.addEventListener('change', syncVideoSource));
+    syncVideoSource();
+    syncQuizCards();
+  })();
+</script>
+{% endblock %}

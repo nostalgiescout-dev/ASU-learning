@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}Check Your Email{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-md px-4 py-16 text-center">
+  <div class="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-3xl"
+       style="background:linear-gradient(135deg,#7c3aed,#a855f7);">
+    <iconify-icon icon="solar:letter-opened-bold-duotone" class="text-4xl text-white"></iconify-icon>
+  </div>
+  <h1 class="font-display text-2xl font-extrabold text-slate-900 mb-2">Check Your Inbox</h1>
+  <p class="text-sm text-slate-500 mb-1">We sent a verification link to:</p>
+  <p class="font-semibold text-violet-700 mb-6">{{ email }}</p>
+  <p class="text-sm text-slate-500">
+    Click the link in the email to confirm your message.
+    The link expires in <strong>1 hour</strong>.
+  </p>
+
+  <form method="POST" action="{{ url_for('contact.form') }}" class="mt-8">
+    <a href="{{ url_for('contact.form') }}"
+       class="inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition hover:opacity-90"
+       style="background:linear-gradient(90deg,#7c3aed,#a855f7); color:#fff;">
+      <iconify-icon icon="solar:arrow-left-bold"></iconify-icon>
+      Back to form
+    </a>
+  </form>
+</div>
+{% endblock %}

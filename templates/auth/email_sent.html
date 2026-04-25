@@ -1,0 +1,60 @@
+{% extends "auth_base.html" %}
+{% block title %}{{ _('Check Your Email') }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen font-sans flex items-center justify-center px-6 py-12" style="background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 40%, #faf5ff 100%);">
+
+  <div class="pointer-events-none fixed inset-0 overflow-hidden">
+    <div class="absolute -left-24 top-20 h-72 w-72 rounded-full blur-3xl" style="background:rgba(167,139,250,0.2);"></div>
+    <div class="absolute -right-20 top-10 h-80 w-80 rounded-full blur-3xl" style="background:rgba(196,181,253,0.2);"></div>
+  </div>
+
+  <div class="relative z-10 w-full max-w-md text-center">
+
+    <!-- Icon -->
+    <div class="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-3xl shadow-xl" style="background:linear-gradient(135deg,#7c3aed,#a855f7); box-shadow:0 12px 40px rgba(124,58,237,0.35);">
+      <iconify-icon icon="solar:letter-bold-duotone" class="text-4xl text-white"></iconify-icon>
+    </div>
+
+    <h1 class="text-3xl font-black" style="color:#1e1b4b;">{{ _('Check your inbox!') }}</h1>
+    <p class="mt-3 text-base leading-7" style="color:#6b7280;">
+      {{ _('We sent a verification link to') }}
+      <span class="font-bold" style="color:#7c3aed;">{{ email }}</span>
+    </p>
+    <p class="mt-2 text-sm" style="color:#9ca3af;">{{ _('Click the link in the email to activate your account. It expires in 1 hour.') }}</p>
+
+    <div class="mt-8 rounded-3xl p-6 text-left" style="background:#fff; border:1px solid #e9d5ff; box-shadow:0 8px 30px rgba(124,58,237,0.08);">
+      <div class="text-sm font-semibold mb-4" style="color:#374151;">{{ _("Didn't receive it?") }}</div>
+      <ul class="space-y-2 text-sm mb-5" style="color:#6b7280;">
+        <li class="flex items-center gap-2">
+          <iconify-icon icon="solar:check-circle-bold-duotone" style="color:#7c3aed;"></iconify-icon>
+          {{ _('Check your spam or junk folder') }}
+        </li>
+        <li class="flex items-center gap-2">
+          <iconify-icon icon="solar:check-circle-bold-duotone" style="color:#7c3aed;"></iconify-icon>
+          {{ _('Make sure you entered the right email') }}
+        </li>
+      </ul>
+
+      <form method="POST" action="{{ url_for('auth.resend_verification') }}">
+        <input type="hidden" name="email" value="{{ email }}" />
+        <button type="submit"
+                class="w-full rounded-2xl py-3 text-sm font-bold transition hover:opacity-90"
+                style="background:linear-gradient(90deg,#7c3aed,#a855f7); color:#fff; box-shadow:0 6px 20px rgba(124,58,237,0.3);">
+          {{ _('Resend verification email') }}
+        </button>
+      </form>
+    </div>
+
+    <div class="mt-6">
+      <a href="{{ url_for('auth.login') }}"
+         class="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition hover:bg-violet-100"
+         style="background:#ede9fe; color:#6d28d9; border:1px solid #c4b5fd;">
+        <iconify-icon icon="solar:arrow-left-linear"></iconify-icon>
+        {{ _('Back to Sign In') }}
+      </a>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

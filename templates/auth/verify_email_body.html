@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>
+<body style="margin:0; padding:0; background:#f5f3ff; font-family: Arial, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f3ff; padding:40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="100%" style="max-width:520px; background:#ffffff; border-radius:24px; overflow:hidden; border:1px solid #e9d5ff; box-shadow:0 8px 30px rgba(124,58,237,0.1);">
+
+          <!-- Header -->
+          <tr>
+            <td style="background:linear-gradient(135deg,#7c3aed,#a855f7); padding:36px 40px; text-align:center;">
+              <div style="font-size:32px; margin-bottom:8px;">✉️</div>
+              <h1 style="margin:0; color:#ffffff; font-size:22px; font-weight:800;">Only Scouts Academy</h1>
+              <p style="margin:6px 0 0; color:#e9d5ff; font-size:12px; text-transform:uppercase; letter-spacing:2px;">Verify Your Email</p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding:36px 40px;">
+              <p style="margin:0 0 16px; font-size:16px; color:#1e1b4b; font-weight:700;">Hi {{ username }},</p>
+              <p style="margin:0 0 24px; font-size:14px; color:#4b5563; line-height:1.7;">
+                Thanks for joining <strong>Only Scouts Academy</strong>! Please verify your email address to activate your account and start your scouting journey.
+              </p>
+
+              <div style="text-align:center; margin:32px 0;">
+                <a href="{{ verify_url }}"
+                   style="display:inline-block; background:linear-gradient(135deg,#7c3aed,#a855f7); color:#ffffff; text-decoration:none; font-size:15px; font-weight:700; padding:14px 36px; border-radius:50px; box-shadow:0 6px 20px rgba(124,58,237,0.35);">
+                  Verify My Email
+                </a>
+              </div>
+
+              <p style="margin:0 0 8px; font-size:13px; color:#6b7280;">Or copy this link into your browser:</p>
+              <p style="margin:0 0 24px; font-size:12px; color:#7c3aed; word-break:break-all; background:#faf5ff; padding:10px 14px; border-radius:10px; border:1px solid #e9d5ff;">
+                {{ verify_url }}
+              </p>
+
+              <p style="margin:0; font-size:12px; color:#9ca3af;">
+                This link expires in <strong>1 hour</strong>. If you didn't create an account, you can safely ignore this email.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding:20px 40px; text-align:center; border-top:1px solid #e9d5ff;">
+              <p style="margin:0; font-size:12px; color:#9ca3af;">Only Scouts Academy &mdash; Scout excellence, one click at a time.</p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

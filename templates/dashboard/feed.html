@@ -1,0 +1,1608 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Community Feed') }}{% endblock %}
+{% block head_extra %}
+<style>
+  .feed-reels-strip {
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: thin;
+  }
+
+  .feed-reels-strip::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  .feed-reels-strip::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.55);
+    border-radius: 999px;
+  }
+
+  .feed-reels-grid {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(170px, 170px);
+    gap: 12px;
+  }
+
+  .feed-reel-tile {
+    position: relative;
+    aspect-ratio: 9 / 16;
+    overflow: hidden;
+    border-radius: 18px;
+    background: linear-gradient(180deg, #111827, #020617);
+  }
+
+  .feed-reel-tile video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background: #020617;
+  }
+
+  .feed-reel-tile::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(2, 6, 23, 0.05), rgba(2, 6, 23, 0.8));
+    pointer-events: none;
+  }
+
+  .feed-reel-tile-info {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1;
+    padding: 12px;
+    color: #f8fafc;
+  }
+
+  .feed-reel-tile-title {
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .feed-reel-tile-meta {
+    margin-top: 6px;
+    font-size: 11px;
+    color: rgba(226, 232, 240, 0.88);
+  }
+
+  @media (max-width: 640px) {
+    .feed-reels-grid {
+      grid-auto-columns: minmax(150px, 150px);
+    }
+  }
+
+  .reel-viewer-shell {
+    position: relative;
+    overflow: hidden;
+    border-radius: 32px;
+    background:
+      radial-gradient(circle at top, rgba(30, 41, 59, 0.55), transparent 42%),
+      #020617;
+    box-shadow: 0 24px 80px rgba(2, 6, 23, 0.34);
+  }
+
+  .reel-viewer-toolbar {
+    position: sticky;
+    top: 14px;
+    z-index: 20;
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    padding: 18px 18px 0;
+    pointer-events: none;
+  }
+
+  .reel-viewer-toolbar button {
+    pointer-events: auto;
+    display: inline-flex;
+    height: 54px;
+    width: 54px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(15, 23, 42, 0.88);
+    color: #f8fafc;
+    box-shadow: 0 10px 30px rgba(2, 6, 23, 0.35);
+    transition: transform 0.2s ease, background 0.2s ease;
+  }
+
+  .reel-viewer-toolbar button:hover {
+    transform: translateY(-1px);
+    background: rgba(30, 41, 59, 0.96);
+  }
+
+  .reel-viewer-list {
+    height: min(84vh, 980px);
+    overflow-y: auto;
+    scroll-snap-type: y mandatory;
+    scrollbar-width: none;
+  }
+
+  .reel-viewer-list::-webkit-scrollbar {
+    display: none;
+  }
+
+  .reel-viewer-item {
+    min-height: min(84vh, 980px);
+    scroll-snap-align: start;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 26px 88px 34px;
+  }
+
+  .reel-viewer-stage {
+    display: grid;
+    width: 100%;
+    max-width: 1120px;
+    align-items: end;
+    gap: 22px;
+    grid-template-columns: minmax(0, 1fr) 88px;
+  }
+
+  .reel-viewer-main {
+    display: flex;
+    justify-content: center;
+  }
+
+  .reel-viewer-phone {
+    width: min(100%, 430px);
+  }
+
+  .reel-viewer-frame {
+    position: relative;
+    overflow: hidden;
+    border-radius: 34px;
+    background: #000;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+  }
+
+  .reel-viewer-frame video {
+    aspect-ratio: 9 / 16;
+    width: 100%;
+    display: block;
+    object-fit: cover;
+    background: #000;
+  }
+
+  .reel-viewer-frame::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(2, 6, 23, 0.03), rgba(2, 6, 23, 0.82));
+    pointer-events: none;
+  }
+
+  .reel-viewer-overlay {
+    position: absolute;
+    inset: auto 0 0;
+    z-index: 2;
+    padding: 20px 20px 18px;
+    color: #f8fafc;
+  }
+
+  .reel-viewer-author {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .reel-viewer-author img {
+    width: 42px;
+    height: 42px;
+    border-radius: 999px;
+    object-fit: cover;
+    border: 2px solid rgba(255, 255, 255, 0.15);
+  }
+
+  .reel-viewer-author-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  .reel-viewer-author-role {
+    margin-top: 2px;
+    font-size: 12px;
+    color: rgba(226, 232, 240, 0.82);
+  }
+
+  .reel-viewer-caption {
+    max-width: 100%;
+  }
+
+  .reel-viewer-title {
+    font-size: 18px;
+    font-weight: 800;
+    line-height: 1.35;
+    color: #fff;
+  }
+
+  .reel-viewer-text {
+    margin-top: 8px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: rgba(226, 232, 240, 0.92);
+    white-space: pre-line;
+  }
+
+  .reel-viewer-date {
+    margin-top: 10px;
+    font-size: 12px;
+    color: rgba(148, 163, 184, 0.92);
+  }
+
+  .reel-viewer-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    padding-bottom: 18px;
+  }
+
+  .reel-action {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    border: 0;
+    background: transparent;
+    color: #f8fafc;
+    text-decoration: none;
+  }
+
+  .reel-action-circle {
+    display: inline-flex;
+    height: 56px;
+    width: 56px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(15, 23, 42, 0.88);
+    box-shadow: 0 16px 34px rgba(2, 6, 23, 0.32);
+    transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease;
+  }
+
+  .reel-action:hover .reel-action-circle,
+  .reel-action:focus-visible .reel-action-circle {
+    transform: translateY(-1px);
+    background: rgba(30, 41, 59, 0.96);
+  }
+
+  .reel-action-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    text-align: center;
+  }
+
+  .reel-action.post-like-btn.is-liked .reel-action-circle {
+    border-color: rgba(248, 113, 113, 0.55);
+    color: #f87171;
+  }
+
+  .reel-comment-sheet {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(2, 6, 23, 0.72);
+    backdrop-filter: blur(10px);
+  }
+
+  .reel-comment-sheet.hidden {
+    display: none;
+  }
+
+  .reel-comment-sheet-panel {
+    width: min(100%, 560px);
+    max-height: min(76vh, 760px);
+    overflow: hidden;
+    border-radius: 28px;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    background: rgba(15, 23, 42, 0.96);
+    box-shadow: 0 28px 70px rgba(2, 6, 23, 0.42);
+  }
+
+  .reel-comment-sheet-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+    padding: 18px 20px 14px;
+  }
+
+  .reel-comment-sheet-title {
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(148, 163, 184, 0.92);
+  }
+
+  .reel-comment-sheet-close {
+    display: inline-flex;
+    height: 40px;
+    width: 40px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    background: rgba(255, 255, 255, 0.06);
+    color: #f8fafc;
+  }
+
+  .reel-comment-sheet-body {
+    max-height: calc(min(76vh, 760px) - 73px);
+    overflow-y: auto;
+    padding: 16px 18px 18px;
+  }
+
+  .reel-comment-form {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .reel-comment-form img {
+    width: 38px;
+    height: 38px;
+    border-radius: 999px;
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+
+  .reel-comment-form input {
+    width: 100%;
+    border-radius: 999px;
+    border: 1px solid rgba(148, 163, 184, 0.24);
+    background: rgba(255, 255, 255, 0.06);
+    padding: 11px 14px;
+    font-size: 14px;
+    color: #f8fafc;
+  }
+
+  .reel-comment-form input::placeholder {
+    color: rgba(148, 163, 184, 0.88);
+  }
+
+  .reel-comment-form button {
+    border-radius: 999px;
+    background: #2563eb;
+    padding: 0 16px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    transition: background 0.2s ease;
+  }
+
+  .reel-comment-form button:hover {
+    background: #1d4ed8;
+  }
+
+  .reel-comment-list {
+    display: grid;
+    gap: 10px;
+  }
+
+  .reel-comment {
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.06);
+    padding: 12px 14px;
+  }
+
+  .reel-comment-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+
+  .reel-comment-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  .reel-comment-time {
+    font-size: 11px;
+    color: rgba(148, 163, 184, 0.88);
+  }
+
+  .reel-comment-body {
+    font-size: 13px;
+    line-height: 1.55;
+    color: rgba(226, 232, 240, 0.92);
+  }
+
+  .reel-nav {
+    position: absolute;
+    top: 50%;
+    right: 22px;
+    z-index: 18;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transform: translateY(-50%);
+  }
+
+  .reel-nav button {
+    display: inline-flex;
+    height: 58px;
+    width: 58px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(15, 23, 42, 0.92);
+    color: #f8fafc;
+    box-shadow: 0 16px 34px rgba(2, 6, 23, 0.32);
+    transition: transform 0.2s ease, opacity 0.2s ease;
+  }
+
+  .reel-nav button:hover:not(:disabled) {
+    transform: translateY(-1px);
+  }
+
+  .reel-nav button:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+
+  .reel-viewer-empty {
+    padding: 72px 24px;
+    text-align: center;
+    color: rgba(226, 232, 240, 0.92);
+  }
+
+  .reel-viewer-empty h3 {
+    margin-bottom: 8px;
+    font-size: 20px;
+    font-weight: 800;
+    color: #fff;
+  }
+
+  @media (max-width: 1024px) {
+    .reel-viewer-item {
+      padding: 24px 28px 34px;
+    }
+
+    .reel-viewer-stage {
+      grid-template-columns: minmax(0, 1fr);
+      justify-items: center;
+      gap: 16px;
+    }
+
+    .reel-viewer-actions {
+      flex-direction: row;
+      flex-wrap: wrap;
+      justify-content: center;
+      padding-bottom: 0;
+    }
+
+    .reel-nav {
+      right: 12px;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .reel-viewer-shell {
+      border-radius: 24px;
+    }
+
+    .reel-viewer-item {
+      padding: 16px 14px 24px;
+    }
+
+    .reel-viewer-toolbar {
+      top: 10px;
+      padding-top: 14px;
+    }
+
+    .reel-viewer-toolbar button {
+      height: 48px;
+      width: 48px;
+    }
+
+    .reel-viewer-phone {
+      width: 100%;
+    }
+
+    .reel-viewer-actions {
+      width: 100%;
+      justify-content: space-between;
+    }
+
+    .reel-action {
+      flex: 1 1 0;
+    }
+
+    .reel-action-circle {
+      height: 50px;
+      width: 50px;
+    }
+
+    .reel-nav {
+      position: static;
+      transform: none;
+      flex-direction: row;
+      justify-content: center;
+      padding: 0 0 18px;
+    }
+
+    .reel-nav button {
+      height: 50px;
+      width: 50px;
+    }
+
+    .reel-comment-sheet {
+      padding: 10px;
+    }
+
+    .reel-comment-sheet-panel {
+      width: 100%;
+      max-height: 82vh;
+      border-radius: 24px;
+    }
+  }
+
+  /* ── Mobile overrides ────────────────────────────────────────── */
+  @media (max-width: 640px) {
+    /* Post cards */
+    .feed-post-card { border-radius: 14px; }
+    .feed-post-card .p-4 { padding: 12px !important; }
+
+    /* Reels strip tiles */
+    .feed-reels-grid { grid-auto-columns: minmax(120px, 120px); }
+
+    /* Filter pills */
+    .feed-filter-pill { font-size: 11px; padding: 5px 11px; }
+
+    /* Compact post action bar */
+    .feed-post-actions { gap: 8px !important; }
+    .feed-post-actions button,
+    .feed-post-actions a { font-size: 12px !important; padding: 4px 8px !important; }
+  }
+
+  /* ── Composer collapse/expand ─────────────────────────────────
+   * On mobile: show only the trigger bar.
+   * On sm+: always show the full form.
+   */
+  #composer-body {
+    display: none; /* collapsed by default on all, JS shows on sm+ */
+  }
+  #composer-body.open { display: block; }
+  @media (min-width: 640px) {
+    #composer-trigger { display: none; }
+    #composer-body { display: block !important; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-screen-xl px-3 py-3 lg:px-8 lg:py-6">
+  <div class="mb-3 flex items-center justify-between">
+    <h1 class="font-display text-lg font-800 text-slate-900 lg:text-2xl">{{ _('Community Feed') }}</h1>
+
+    <div class="flex items-center gap-2">
+
+      <!-- Language Switcher -->
+      <div class="relative">
+        <button id="lang-btn" class="flex h-10 w-10 items-center justify-center rounded-full border border-slate-100 bg-white shadow-sm transition hover:bg-slate-50">
+          <iconify-icon icon="solar:global-bold-duotone" class="text-xl text-slate-600"></iconify-icon>
+        </button>
+        <div id="lang-panel" class="absolute end-0 top-12 z-50 hidden w-44 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-xl">
+          {% for code, label, flag in [('ar','العربية','🇲🇦'),('en','English','🇬🇧'),('fr','Français','🇫🇷'),('es','Español','🇪🇸')] %}
+          <a href="{{ url_for('auth.set_language', lang=code) }}"
+             class="flex items-center gap-3 px-4 py-2.5 text-sm transition hover:bg-slate-50 {{ 'font-bold text-primary-600 bg-primary-50' if current_locale == code else 'text-slate-700' }}">
+            <span>{{ flag }}</span>
+            <span>{{ label }}</span>
+            {% if current_locale == code %}
+            <iconify-icon icon="solar:check-circle-bold-duotone" class="ms-auto text-primary-600"></iconify-icon>
+            {% endif %}
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Notification Bell -->
+      <div class="relative">
+      <button id="notif-btn" class="flex h-10 w-10 items-center justify-center rounded-full border border-slate-100 bg-white shadow-sm transition hover:bg-slate-50">
+        <iconify-icon icon="solar:bell-bold-duotone" class="text-xl text-slate-600"></iconify-icon>
+        {% if notifications %}
+        <span class="absolute -top-1 -end-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-red-500 text-[10px] font-bold text-white">
+          {{ notifications|length }}
+        </span>
+        {% endif %}
+      </button>
+
+      <div id="notif-panel" class="absolute end-0 top-12 z-50 hidden w-80 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-xl">
+        <div class="flex items-center justify-between border-b border-slate-100 p-4">
+          <div class="text-sm font-semibold text-slate-800">{{ _('Notifications') }}</div>
+          <a href="{{ url_for('notifications.index') }}" class="text-xs font-semibold text-primary-600 hover:underline">{{ _('Open all') }}</a>
+        </div>
+        <div class="max-h-64 overflow-y-auto">
+          {% for n in notifications %}
+          <a href="{{ n.open_url }}" class="flex items-start gap-3 border-b border-slate-50 px-4 py-3 hover:bg-slate-50">
+            <span class="mt-0.5 text-xl">{{ n.icon or '!' }}</span>
+            <div class="min-w-0">
+              <div class="text-sm font-semibold text-slate-800">{{ n.title }}</div>
+              {% if n.body %}<div class="mt-0.5 text-xs text-slate-500">{{ n.body }}</div>{% endif %}
+              <div class="mt-1 text-[11px] text-slate-400">{{ n.created_label }}</div>
+            </div>
+          </a>
+          {% else %}
+          <div class="p-6 text-center text-sm text-slate-400">{{ _('No new notifications') }}</div>
+          {% endfor %}
+        </div>
+        {% if notifications %}
+        <form method="POST" action="{{ url_for('notifications.mark_all_read') }}" class="border-t border-slate-100 p-3">
+          <button type="submit" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-primary-300 hover:text-primary-700">
+            {{ _('Mark all as read') }}
+          </button>
+        </form>
+        {% endif %}
+      </div>
+      </div><!-- end notif relative -->
+
+    </div><!-- end flex gap-2 -->
+  </div>
+
+  {% if can_create_posts and active_filter != 'reel' %}
+  <div class="card mb-4">
+    <!-- Tap-to-expand trigger (mobile only) -->
+    <button id="composer-trigger" type="button"
+            class="flex w-full items-center gap-3 px-4 py-3"
+            style="-webkit-tap-highlight-color:transparent;">
+      <img src="{{ current_user['avatar_url'] }}" class="w-8 h-8 rounded-full object-cover flex-shrink-0" alt="" />
+      <span class="flex-1 rounded-xl bg-slate-100 px-4 py-2 text-sm text-slate-400 text-start">
+        {{ _('Write something...') }}
+      </span>
+      <span class="flex h-8 w-8 items-center justify-center rounded-full bg-primary-600 flex-shrink-0">
+        <iconify-icon icon="solar:pen-bold" class="text-sm text-white"></iconify-icon>
+      </span>
+    </button>
+
+    <!-- Full form (always visible on sm+, toggled on mobile) -->
+    <div id="composer-body" class="px-4 pb-4 pt-1">
+    <form method="POST" action="{{ url_for('dashboard.create_feed_post') }}" enctype="multipart/form-data" class="space-y-3">
+      <input type="hidden" name="return_to" value="feed" />
+
+      <!-- Type + Category row (compact on mobile) -->
+      <div class="flex flex-wrap gap-2">
+        <select id="feed-post-type" name="post_type"
+                class="flex-1 min-w-0 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-400">
+          <option value="text">{{ _('Text Post') }}</option>
+          <option value="video">{{ _('Video Post') }}</option>
+          <option value="reel">{{ _('Reel Post') }}</option>
+          {% if can_use_full_feed_features %}
+          <option value="course_announcement">{{ _('Course Announcement') }}</option>
+          <option value="book_announcement">{{ _('Book Announcement') }}</option>
+          {% endif %}
+        </select>
+        <div id="feed-category-field" class="hidden flex-1 min-w-0">
+          <select name="category"
+                  class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-400">
+            {% for value, label in [('general', _('General')),('knot-tying', _('Knots')),('first-aid', _('First Aid')),('navigation', _('Navigation')),('camping', _('Camping')),('leadership', _('Leadership'))] %}
+            <option value="{{ value }}">{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        {% if can_use_full_feed_features %}
+        <label class="flex items-center gap-1.5 text-sm text-slate-600 whitespace-nowrap self-center">
+          <input type="checkbox" name="is_pinned" class="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500" />
+          {{ _('Pin post') }}
+        </label>
+        {% endif %}
+      </div>
+
+      <!-- Title -->
+      <input type="text" name="title" placeholder="{{ _('Post title') }}"
+             class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-400" />
+
+      <!-- Body -->
+      <textarea name="body" rows="3" placeholder="{{ _('Write your post text here...') }}"
+                class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-400 resize-none"></textarea>
+
+      <!-- Media fields (video/reel) -->
+      <div id="feed-media-fields" class="hidden space-y-2">
+        <input id="feed-media-url" type="url" name="media_url"
+               placeholder="{{ _('https://example.com/video.mp4') }}"
+               class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-400" />
+        <div class="flex items-center gap-2 text-xs text-slate-400">
+          <span class="flex-1 h-px bg-slate-200"></span>
+          <span>{{ _('or upload') }}</span>
+          <span class="flex-1 h-px bg-slate-200"></span>
+        </div>
+        <input id="feed-media-file" type="file" name="media_file"
+               class="block w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-700 file:me-3 file:rounded-lg file:border-0 file:bg-primary-50 file:px-3 file:py-1.5 file:font-semibold file:text-primary-700 hover:file:bg-primary-100" />
+        <p id="feed-media-url-label" class="hidden"></p>
+        <p id="feed-media-file-label" class="hidden"></p>
+      </div>
+
+      <!-- Course / Book selectors -->
+      <div id="feed-course-field" class="hidden">
+        <select name="course_id" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-400">
+          <option value="">{{ _('Select a course') }}</option>
+          {% for course in creator_courses %}
+          <option value="{{ course.id }}">{{ course.title }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div id="feed-book-field" class="hidden">
+        <select name="book_id" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-400">
+          <option value="">{{ _('Select a book') }}</option>
+          {% for book in creator_books %}
+          <option value="{{ book.id }}">{{ book.title }} · {{ book.category_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Publish button -->
+      <button type="submit"
+              class="w-full rounded-xl bg-primary-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-primary-700 active:scale-95">
+        {{ _('Publish') }}
+      </button>
+    </form>
+    </div><!-- /composer-body -->
+  </div>
+  {% elif active_filter != 'reel' %}
+  <div class="card mb-6 border border-dashed border-slate-200 bg-slate-50 p-5">
+    <h2 class="font-display text-lg font-700 text-slate-900">{{ _('Posting is limited') }}</h2>
+    <p class="mt-1 text-sm text-slate-500">{{ _('Only admins and instructors can publish feed posts.') }}</p>
+  </div>
+  {% endif %}
+
+  <div class="mb-4 flex gap-2 overflow-x-auto pb-2 no-scrollbar px-1">
+    {% for key, meta in post_filters.items() %}
+    <a href="{{ url_for('dashboard.feed', filter=key) }}"
+       class="feed-filter-pill flex-shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition {{ 'bg-primary-600 text-white shadow-md' if active_filter == key else 'border border-slate-200 bg-white text-slate-600 hover:border-primary-300' }}">
+      {{ meta.icon }} {{ _(meta.label) }}
+    </a>
+    {% endfor %}
+  </div>
+
+  {% if active_filter == 'all' and reel_strip %}
+  <div class="card mb-6 overflow-hidden">
+    <div class="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+      <div class="flex items-center gap-2">
+        <iconify-icon icon="solar:clapperboard-play-bold-duotone" class="text-xl text-slate-700"></iconify-icon>
+        <h2 class="font-display text-lg font-700 text-slate-900">{{ _('Reels') }}</h2>
+      </div>
+      <a href="{{ url_for('dashboard.feed', filter='reel') }}" class="text-sm font-semibold text-primary-600 hover:underline">
+        {{ _('View all') }}
+      </a>
+    </div>
+    <div class="feed-reels-strip px-4 py-4">
+      <div class="feed-reels-grid">
+        {% for reel in reel_strip %}
+        <a href="{{ url_for('dashboard.feed', filter='reel', page=1) }}#reel-post-{{ reel.id }}" class="feed-reel-tile transition hover:-translate-y-0.5">
+          <video muted playsinline preload="metadata">
+            <source src="{{ reel.media_url }}" type="video/mp4" />
+          </video>
+          <div class="feed-reel-tile-info">
+            <div class="feed-reel-tile-title">{{ reel.title }}</div>
+            <div class="feed-reel-tile-meta">{{ reel.author_full_name or reel.author_username }}</div>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if active_filter == 'reel' %}
+  <section class="reel-viewer-shell">
+    <div class="reel-viewer-toolbar">
+      <button type="button" id="reel-toggle-play" aria-label="{{ _('Pause reels') }}">
+        <iconify-icon icon="solar:pause-bold" class="text-2xl"></iconify-icon>
+      </button>
+      <button type="button" id="reel-toggle-mute" aria-label="{{ _('Unmute reels') }}">
+        <iconify-icon icon="solar:volume-cross-bold" class="text-2xl"></iconify-icon>
+      </button>
+    </div>
+
+    {% if posts.items %}
+    <div class="reel-viewer-list" id="reel-viewer-list">
+      {% for post in posts.items %}
+      <article id="reel-post-{{ post.id }}" class="reel-viewer-item" data-reel-item>
+        <div class="w-full">
+          <div class="reel-viewer-stage">
+            <div class="reel-viewer-main">
+              <div class="reel-viewer-phone">
+                <div class="reel-viewer-frame">
+                  <video
+                    data-reel-video
+                    playsinline
+                    muted
+                    preload="metadata"
+                    poster=""
+                  >
+                    <source src="{{ post.media_url }}" type="video/mp4" />
+                    Your browser does not support the video tag.
+                  </video>
+
+                  <div class="reel-viewer-overlay">
+                    <div class="reel-viewer-author">
+                      <img src="{{ post.author_avatar }}" alt="" />
+                      <div>
+                        <div class="reel-viewer-author-name">{{ post.author_full_name or post.author_username }}</div>
+                        <div class="reel-viewer-author-role">
+                          {{ {'admin':'Admin','instructor':'Instructor'}.get(post.author_role, 'Scout') }} · {{ post.created_at[:16] }}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="reel-viewer-caption">
+                      <div class="reel-viewer-title">{{ post.title }}</div>
+                      {% if post.body %}
+                      <div class="reel-viewer-text">{{ post.body }}</div>
+                      {% endif %}
+                      <div class="reel-viewer-date">{{ _('Reel') }} {{ loop.index }} {{ _('of') }} {{ posts.items|length }}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="reel-viewer-actions">
+              <button type="button"
+                      data-like-url="{{ url_for('dashboard.toggle_post_like', post_id=post.id) }}"
+                      class="reel-action post-like-btn {{ 'is-liked' if post.liked else '' }}">
+                <span class="reel-action-circle">
+                  <iconify-icon icon="{{ 'solar:heart-bold' if post.liked else 'solar:heart-outline' }}" class="text-2xl"></iconify-icon>
+                </span>
+                <span class="reel-action-label post-like-count">{{ post.like_count }}</span>
+              </button>
+
+              <button type="button"
+                      class="reel-action reel-comment-toggle"
+                      data-comment-sheet="reel-comments-{{ post.id }}">
+                <span class="reel-action-circle">
+                  <iconify-icon icon="solar:chat-round-dots-outline" class="text-2xl"></iconify-icon>
+                </span>
+                <span class="reel-action-label">{{ post.comment_count }}</span>
+              </button>
+
+              <button type="button"
+                      data-share-url="{{ url_for('dashboard.share_post', post_id=post.id) }}"
+                      class="reel-action post-share-btn">
+                <span class="reel-action-circle">
+                  <iconify-icon icon="solar:share-linear" class="text-2xl"></iconify-icon>
+                </span>
+                <span class="reel-action-label post-share-count">{{ post.share_count }}</span>
+              </button>
+            </div>
+          </div>
+
+          <div id="reel-comments-{{ post.id }}" class="reel-comment-sheet hidden" data-comment-sheet-panel>
+            <div class="reel-comment-sheet-panel" role="dialog" aria-modal="true" aria-label="{{ _('Comments') }}" data-comment-sheet-dialog>
+              <div class="reel-comment-sheet-header">
+                <div class="reel-comment-sheet-title">{{ _('Comments') }}</div>
+                <button type="button" class="reel-comment-sheet-close" data-comment-close>
+                  <iconify-icon icon="solar:close-circle-bold" class="text-xl"></iconify-icon>
+                </button>
+              </div>
+
+              <div class="reel-comment-sheet-body">
+                <form method="POST" action="{{ url_for('dashboard.add_post_comment', post_id=post.id) }}" class="reel-comment-form">
+                  <input type="hidden" name="feed_filter" value="{{ active_filter }}" />
+                  <input type="hidden" name="page" value="{{ posts.page }}" />
+                  <img src="{{ current_user['avatar_url'] }}" alt="" />
+                  <input type="text" name="body" required placeholder="{{ _('Write a comment...') }}" />
+                  <button type="submit">{{ _('Send') }}</button>
+                </form>
+
+                <div class="reel-comment-list">
+                  {% for comment in post.comments %}
+                  <div class="reel-comment">
+                    <div class="reel-comment-head">
+                      <span class="reel-comment-name">{{ comment.full_name or comment.username }}</span>
+                      <span class="reel-comment-time">{{ comment.created_at[:16] }}</span>
+                    </div>
+                    <p class="reel-comment-body">{{ comment.body }}</p>
+                  </div>
+                  {% else %}
+                  <div class="reel-comment">
+                    <p class="reel-comment-body">{{ _('No comments yet. Start the conversation.') }}</p>
+                  </div>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+
+    <div class="reel-nav">
+      <button type="button" id="reel-nav-prev" aria-label="{{ _('Previous reel') }}">
+        <iconify-icon icon="solar:alt-arrow-up-bold" class="text-2xl"></iconify-icon>
+      </button>
+      <button type="button" id="reel-nav-next" aria-label="{{ _('Next reel') }}">
+        <iconify-icon icon="solar:alt-arrow-down-bold" class="text-2xl"></iconify-icon>
+      </button>
+    </div>
+    {% else %}
+    <div class="reel-viewer-empty">
+      <h3>{{ _('No reels yet') }}</h3>
+      <p>{{ _('When an admin adds reels, they will show here in the viewer.') }}</p>
+    </div>
+    {% endif %}
+  </section>
+
+  {% if posts.pages > 1 %}
+  <div class="mt-6 flex justify-center gap-2">
+    {% if posts.has_prev %}
+    <a href="{{ url_for('dashboard.feed', page=posts.prev_num, filter=active_filter) }}" class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-primary-300">
+      {{ _('Prev page') }}
+    </a>
+    {% endif %}
+    <span class="rounded-xl bg-primary-600 px-4 py-2 text-sm font-medium text-white">
+      {{ posts.page }} / {{ posts.pages }}
+    </span>
+    {% if posts.has_next %}
+    <a href="{{ url_for('dashboard.feed', page=posts.next_num, filter=active_filter) }}" class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-primary-300">
+      {{ _('Next page') }}
+    </a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_320px]">
+    <div class="space-y-5">
+      {% if posts.items %}
+      {% for post in posts.items %}
+      <article id="post-{{ post.id }}" class="card feed-post-card overflow-hidden">
+        <div class="p-4 lg:p-5">
+          <div class="mb-4 flex items-start justify-between gap-3">
+            <div class="flex items-center gap-3">
+              <img src="{{ post.author_avatar }}" alt="" class="h-11 w-11 rounded-full object-cover ring-2 ring-primary-100" />
+              <div>
+                <div class="font-semibold text-slate-800">{{ post.author_full_name or post.author_username }}</div>
+                <div class="text-xs text-slate-500">
+                  {{ {'admin':'Admin','instructor':'Instructor'}.get(post.author_role, 'Scout') }}
+                  · Level {{ post.author_level_rank }}
+                  · {{ post.created_at[:16] }}
+                </div>
+              </div>
+            </div>
+            <div class="flex flex-wrap items-center justify-end gap-2">
+              {% if post.is_pinned %}
+              <span class="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">{{ _('Pinned') }}</span>
+              {% endif %}
+              <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+                {{ post_filters[post.post_type].icon }} {{ _(post_filters[post.post_type].label) }}
+              </span>
+              {% if can_use_full_feed_features %}
+              <form method="POST" action="{{ url_for('dashboard.delete_feed_post', post_id=post.id) }}" onsubmit="return confirm('{{ _('Delete this post from the feed?') }}');">
+                <button type="submit" class="rounded-full border border-red-200 bg-red-50 px-3 py-1 text-xs font-semibold text-red-700 transition hover:bg-red-100">
+                  {{ _('Delete') }}
+                </button>
+              </form>
+              {% endif %}
+            </div>
+          </div>
+
+          <h2 class="mb-2 text-xl font-bold text-slate-900">{{ post.title }}</h2>
+          {% if post.body %}
+          <p class="mb-4 whitespace-pre-line text-sm leading-relaxed text-slate-600">{{ post.body }}</p>
+          {% endif %}
+
+          {% if post.post_type == 'image' and post.media_url %}
+          <div class="mb-4 overflow-hidden rounded-2xl bg-slate-100">
+            <img src="{{ post.media_url }}" alt="{{ post.title }}" class="max-h-[560px] w-full object-cover" />
+          </div>
+          {% endif %}
+
+          {% if post.post_type in ['video', 'reel'] and post.media_url %}
+          <div class="mb-4 overflow-hidden rounded-2xl bg-slate-950">
+            {% if 'youtube.com/embed/' in post.media_url %}
+            <div style="position:relative;padding-bottom:56.25%;height:0;">
+              <iframe id="yt-{{ post.id }}"
+                      data-yt-iframe
+                      src="{{ post.media_url }}{% if 'enablejsapi' not in post.media_url %}&enablejsapi=1{% endif %}"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowfullscreen
+                      style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"></iframe>
+            </div>
+            {% else %}
+            <video controls preload="metadata" playsinline webkit-playsinline
+                   data-feed-video
+                   class="h-full max-h-[460px] w-full">
+              <source src="{{ post.media_url }}" type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+            {% endif %}
+          </div>
+          {% endif %}
+
+          {% if post.post_type == 'course_announcement' and post.course_id %}
+          <div class="mb-4 rounded-2xl border border-primary-100 bg-primary-50/70 p-4">
+            <div class="mb-2 text-xs font-semibold uppercase tracking-wide text-primary-700">{{ _('Course Announcement') }}</div>
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <div class="font-semibold text-slate-800">{{ post.linked_course_title or _('Course update') }}</div>
+                <div class="text-xs text-slate-500">{{ (post.linked_course_category or 'general')|replace('-', ' ')|title }}</div>
+              </div>
+              <a href="{{ url_for('courses.detail', course_id=post.course_id) }}" class="rounded-xl bg-primary-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-700">
+                {{ _('Open Course') }}
+              </a>
+            </div>
+          </div>
+          {% endif %}
+
+          {% if post.post_type == 'book_announcement' and post.book_id %}
+          <div class="mb-4 rounded-2xl border border-emerald-100 bg-emerald-50/70 p-4">
+            <div class="mb-2 text-xs font-semibold uppercase tracking-wide text-emerald-700">{{ _('Library Update') }}</div>
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <div class="font-semibold text-slate-800">{{ post.linked_book_title or _('Book update') }}</div>
+                <div class="text-xs text-slate-500">{{ post.linked_book_category or 'General' }} · {{ (post.linked_book_language or 'en')|upper }}</div>
+              </div>
+              <a href="{{ url_for('library.view_book', book_id=post.book_id) }}" target="_blank" rel="noopener" class="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700">
+                {{ _('Read Book') }}
+              </a>
+            </div>
+          </div>
+          {% endif %}
+
+          <div class="flex flex-wrap items-center gap-3 border-t border-slate-100 pt-4">
+            <button type="button"
+                    data-like-url="{{ url_for('dashboard.toggle_post_like', post_id=post.id) }}"
+                    class="post-like-btn inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-semibold transition {{ 'border-red-200 bg-red-50 text-red-600' if post.liked else 'border-slate-200 bg-slate-50 text-slate-600 hover:border-red-200 hover:text-red-600' }}">
+              <iconify-icon icon="{{ 'solar:heart-bold' if post.liked else 'solar:heart-outline' }}" class="text-lg"></iconify-icon>
+              <span class="post-like-count">{{ post.like_count }}</span>
+            </button>
+
+            <a href="#comments-{{ post.id }}" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-primary-300 hover:text-primary-700">
+              <iconify-icon icon="solar:chat-round-dots-outline" class="text-lg"></iconify-icon>
+              {{ post.comment_count }} {{ _('comments') }}
+            </a>
+
+            <button type="button"
+                    data-share-url="{{ url_for('dashboard.share_post', post_id=post.id) }}"
+                    class="post-share-btn inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-primary-300 hover:text-primary-700">
+              <iconify-icon icon="solar:share-linear" class="text-lg"></iconify-icon>
+              <span class="post-share-count">{{ post.share_count }}</span>
+            </button>
+          </div>
+        </div>
+
+        <div id="comments-{{ post.id }}" class="border-t border-slate-100 bg-slate-50/70 px-5 py-4">
+          <form method="POST" action="{{ url_for('dashboard.add_post_comment', post_id=post.id) }}" class="mb-4 flex gap-3">
+            <input type="hidden" name="feed_filter" value="{{ active_filter }}" />
+            <input type="hidden" name="page" value="{{ posts.page }}" />
+            <img src="{{ current_user['avatar_url'] }}" alt="" class="h-9 w-9 rounded-full object-cover" />
+            <div class="flex-1">
+              <input type="text" name="body" required
+                     class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-400"
+                     placeholder="{{ _('Add a comment to this post...') }}" />
+            </div>
+            <button type="submit" class="rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-700">
+              {{ _('Comment') }}
+            </button>
+          </form>
+
+          <div class="space-y-3">
+            {% for comment in post.comments[-4:] %}
+            <div class="flex gap-3">
+              <img src="{{ comment.author_avatar }}" alt="" class="h-8 w-8 rounded-full object-cover" />
+              <div class="flex-1 rounded-2xl bg-white px-4 py-3">
+                <div class="mb-1 flex flex-wrap items-center gap-2">
+                  <span class="text-sm font-semibold text-slate-800">{{ comment.full_name or comment.username }}</span>
+                  <span class="text-xs text-slate-400">{{ comment.created_at[:16] }}</span>
+                </div>
+                <p class="text-sm text-slate-600">{{ comment.body }}</p>
+              </div>
+            </div>
+            {% else %}
+            <div class="rounded-2xl border border-dashed border-slate-200 bg-white px-4 py-4 text-sm text-slate-400">
+              {{ _('No comments yet. Start the conversation.') }}
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </article>
+      {% endfor %}
+
+      {% if posts.pages > 1 %}
+      <div class="flex justify-center gap-2 pt-2">
+        {% if posts.has_prev %}
+        <a href="{{ url_for('dashboard.feed', page=posts.prev_num, filter=active_filter) }}" class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-primary-300">
+          {{ _('Prev') }}
+        </a>
+        {% endif %}
+        <span class="rounded-xl bg-primary-600 px-4 py-2 text-sm font-medium text-white">
+          {{ posts.page }} / {{ posts.pages }}
+        </span>
+        {% if posts.has_next %}
+        <a href="{{ url_for('dashboard.feed', page=posts.next_num, filter=active_filter) }}" class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-primary-300">
+          {{ _('Next') }}
+        </a>
+        {% endif %}
+      </div>
+      {% endif %}
+      {% else %}
+      <div class="card p-12 text-center">
+        <div class="mb-3 text-5xl">📝</div>
+        <h3 class="mb-1 font-semibold text-slate-700">{{ _('No posts yet in this feed') }}</h3>
+        <p class="text-sm text-slate-400">{{ _('Publish the first update to get the conversation started.') }}</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <aside class="hidden space-y-4 xl:block">
+      <div class="card p-4">
+        <div class="mb-3 flex items-center justify-between">
+          <h3 class="font-display text-sm font-700 text-slate-900">{{ _('Add Friends') }}</h3>
+          <span class="text-xs font-semibold text-primary-600">{{ friend_suggestions|length }} {{ _('suggestions') }}</span>
+        </div>
+        {% if friend_suggestions %}
+        {% for user in friend_suggestions %}
+        <div class="-mx-2 flex items-center gap-3 rounded-xl px-2 py-2.5 transition hover:bg-slate-50">
+          <img src="{{ user.avatar_url }}" alt="" class="h-10 w-10 rounded-full object-cover" />
+          <div class="min-w-0 flex-1">
+            <p class="truncate text-xs font-semibold text-slate-700">{{ user.full_name or user.username }}</p>
+            <p class="truncate text-xs text-slate-400">{{ user.scout_unit or user.role|title }}</p>
+          </div>
+          {% if user.friend_status == 'accepted' %}
+          <span class="rounded-xl bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700">{{ _('Friends') }}</span>
+          {% elif user.incoming_request %}
+          <button type="button"
+                  data-request-url="{{ url_for('dashboard.send_friend_request', user_id=user.id) }}"
+                  class="friend-request-btn rounded-xl bg-primary-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-primary-700">
+            {{ _('Accept') }}
+          </button>
+          {% elif user.friend_status == 'pending' %}
+          <span class="rounded-xl bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700">{{ _('Pending') }}</span>
+          {% else %}
+          <button type="button"
+                  data-request-url="{{ url_for('dashboard.send_friend_request', user_id=user.id) }}"
+                  class="friend-request-btn rounded-xl bg-primary-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-primary-700">
+            Add
+          </button>
+          {% endif %}
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="py-6 text-center text-xs text-slate-400">{{ _('No friend suggestions right now') }}</div>
+        {% endif %}
+      </div>
+
+
+      <a href="{{ url_for('ai.chat_ui') }}" class="card block border border-amber-100 bg-gradient-to-br from-amber-50 to-orange-50 p-4 transition hover:border-amber-300">
+        <div class="flex items-center gap-3">
+          <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-2xl">AI</div>
+          <div>
+            <h3 class="font-display text-sm font-700 text-slate-800">{{ _('Kachaf AI') }}</h3>
+            <p class="mt-0.5 text-xs text-slate-500">{{ _('Ask anything about scouting') }}</p>
+          </div>
+          <iconify-icon icon="solar:arrow-right-bold" class="ms-auto text-amber-500 flip-rtl"></iconify-icon>
+        </div>
+      </a>
+    </aside>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const feedTranslations = {
+  reelUrl: {{ _('Reel URL')|tojson }},
+  videoUrl: {{ _('Video URL')|tojson }},
+  uploadReel: {{ _('Upload reel')|tojson }},
+  uploadVideo: {{ _('Upload video')|tojson }},
+  reelPlaceholder: {{ _('https://example.com/reel.mp4')|tojson }},
+  videoPlaceholder: {{ _('https://example.com/video.mp4')|tojson }},
+  likeError: {{ _('Unable to update like right now.')|tojson }},
+  shareError: {{ _('Unable to share right now.')|tojson }},
+  copiedLink: {{ _('Post link copied to clipboard.')|tojson }},
+  copyLink: {{ _('Copy this link:')|tojson }},
+  requestError: {{ _('Unable to send request right now.')|tojson }},
+  pending: {{ _('Pending')|tojson }},
+  requestUpdated: {{ _('Friend request updated.')|tojson }},
+  playReels: {{ _('Play reels')|tojson }},
+  pauseReels: {{ _('Pause reels')|tojson }},
+  unmuteReels: {{ _('Unmute reels')|tojson }},
+  muteReels: {{ _('Mute reels')|tojson }},
+};
+
+const langBtn = document.getElementById('lang-btn');
+const langPanel = document.getElementById('lang-panel');
+if (langBtn && langPanel) {
+  langBtn.addEventListener('click', (event) => {
+    event.stopPropagation();
+    langPanel.classList.toggle('hidden');
+    if (notifPanel) notifPanel.classList.add('hidden');
+  });
+  document.addEventListener('click', () => langPanel.classList.add('hidden'));
+}
+
+const notifBtn = document.getElementById('notif-btn');
+const notifPanel = document.getElementById('notif-panel');
+if (notifBtn && notifPanel) {
+  notifBtn.addEventListener('click', (event) => {
+    event.stopPropagation();
+    notifPanel.classList.toggle('hidden');
+  });
+  document.addEventListener('click', () => notifPanel.classList.add('hidden'));
+}
+
+const postTypeSelect = document.getElementById('feed-post-type');
+const mediaFields = document.getElementById('feed-media-fields');
+const categoryField = document.getElementById('feed-category-field');
+const courseField = document.getElementById('feed-course-field');
+const bookField = document.getElementById('feed-book-field');
+const mediaUrlLabel = document.getElementById('feed-media-url-label');
+const mediaFileLabel = document.getElementById('feed-media-file-label');
+const mediaUrlInput = document.getElementById('feed-media-url');
+const mediaFileInput = document.getElementById('feed-media-file');
+
+function updateComposerFields() {
+  if (!postTypeSelect) return;
+  const type = postTypeSelect.value;
+  const isMedia = ['video', 'reel'].includes(type);
+  if (mediaFields) mediaFields.classList.toggle('hidden', !isMedia);
+  if (categoryField) categoryField.classList.toggle('hidden', !['video', 'reel'].includes(type));
+  if (courseField) courseField.classList.toggle('hidden', type !== 'course_announcement');
+  if (bookField) bookField.classList.toggle('hidden', type !== 'book_announcement');
+
+  if (isMedia && mediaUrlLabel && mediaFileLabel && mediaUrlInput && mediaFileInput) {
+    const isReel = type === 'reel';
+    mediaUrlLabel.textContent = isReel ? feedTranslations.reelUrl : feedTranslations.videoUrl;
+    mediaFileLabel.textContent = isReel ? feedTranslations.uploadReel : feedTranslations.uploadVideo;
+    mediaUrlInput.placeholder = isReel ? feedTranslations.reelPlaceholder : feedTranslations.videoPlaceholder;
+    mediaFileInput.accept = '.mp4,.mov,.webm,.m4v,video/mp4,video/quicktime,video/webm';
+  }
+}
+
+if (postTypeSelect) {
+  postTypeSelect.addEventListener('change', updateComposerFields);
+  updateComposerFields();
+}
+
+document.querySelectorAll('.post-like-btn').forEach((button) => {
+  button.addEventListener('click', async () => {
+    const response = await fetch(button.dataset.likeUrl, { method: 'POST' });
+    const data = await response.json();
+    if (!response.ok) {
+      showToast(data.error || feedTranslations.likeError, 'danger');
+      return;
+    }
+
+    const liked = !!data.liked;
+    const icon = button.querySelector('iconify-icon');
+    const count = button.querySelector('.post-like-count');
+    count.textContent = data.count;
+    icon.setAttribute('icon', liked ? 'solar:heart-bold' : 'solar:heart-outline');
+    if (button.classList.contains('reel-action')) {
+      button.classList.toggle('is-liked', liked);
+    } else {
+      button.className = `post-like-btn inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-sm font-semibold transition ${
+        liked
+          ? 'border-red-200 bg-red-50 text-red-600'
+          : 'border-slate-200 bg-slate-50 text-slate-600 hover:border-red-200 hover:text-red-600'
+      }`;
+    }
+  });
+});
+
+document.querySelectorAll('.post-share-btn').forEach((button) => {
+  button.addEventListener('click', async () => {
+    const response = await fetch(button.dataset.shareUrl, { method: 'POST' });
+    const data = await response.json();
+    if (!response.ok) {
+      showToast(data.error || feedTranslations.shareError, 'danger');
+      return;
+    }
+
+    button.querySelector('.post-share-count').textContent = data.count;
+    const shareUrl = new URL(data.share_url, window.location.origin).toString();
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      showToast(feedTranslations.copiedLink, 'success');
+    } catch (error) {
+      window.prompt(feedTranslations.copyLink, shareUrl);
+    }
+  });
+});
+
+document.querySelectorAll('.friend-request-btn').forEach((button) => {
+  button.addEventListener('click', async () => {
+    const response = await fetch(button.dataset.requestUrl, { method: 'POST' });
+    const data = await response.json();
+    if (!response.ok) {
+      showToast(data.error || feedTranslations.requestError, 'danger');
+      return;
+    }
+
+    button.textContent = data.label || feedTranslations.pending;
+    if ((data.status || '') === 'accepted') {
+      button.className = 'rounded-xl bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700';
+    } else {
+      button.className = 'rounded-xl bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700';
+    }
+    button.disabled = true;
+    showToast(data.message || feedTranslations.requestUpdated, 'success');
+  });
+});
+
+const reelViewerList = document.getElementById('reel-viewer-list');
+const reelPlayButton = document.getElementById('reel-toggle-play');
+const reelMuteButton = document.getElementById('reel-toggle-mute');
+const reelPrevButton = document.getElementById('reel-nav-prev');
+const reelNextButton = document.getElementById('reel-nav-next');
+const reelCommentToggles = Array.from(document.querySelectorAll('.reel-comment-toggle'));
+const reelCommentSheets = Array.from(document.querySelectorAll('[data-comment-sheet-panel]'));
+
+if (reelViewerList) {
+  const reelItems = Array.from(reelViewerList.querySelectorAll('[data-reel-item]'));
+  const reelVideos = reelItems.map((item) => item.querySelector('[data-reel-video]'));
+  let currentReelIndex = 0;
+  let reelsPaused = false;
+  let reelsMuted = true;
+
+  const updateNavState = () => {
+    if (reelPrevButton) reelPrevButton.disabled = currentReelIndex <= 0;
+    if (reelNextButton) reelNextButton.disabled = currentReelIndex >= reelItems.length - 1;
+  };
+
+  const updateToolbarState = () => {
+    if (reelPlayButton) {
+      reelPlayButton.innerHTML = reelsPaused
+        ? '<iconify-icon icon="solar:play-bold" class="text-2xl"></iconify-icon>'
+        : '<iconify-icon icon="solar:pause-bold" class="text-2xl"></iconify-icon>';
+      reelPlayButton.setAttribute('aria-label', reelsPaused ? feedTranslations.playReels : feedTranslations.pauseReels);
+    }
+
+    if (reelMuteButton) {
+      reelMuteButton.innerHTML = reelsMuted
+        ? '<iconify-icon icon="solar:volume-cross-bold" class="text-2xl"></iconify-icon>'
+        : '<iconify-icon icon="solar:volume-loud-bold" class="text-2xl"></iconify-icon>';
+      reelMuteButton.setAttribute('aria-label', reelsMuted ? feedTranslations.unmuteReels : feedTranslations.muteReels);
+    }
+  };
+
+  const playCurrentReel = () => {
+    reelVideos.forEach((video, index) => {
+      if (!video) return;
+      video.muted = reelsMuted;
+      if (index === currentReelIndex && !reelsPaused) {
+        const playPromise = video.play();
+        if (playPromise && typeof playPromise.catch === 'function') {
+          playPromise.catch(() => {});
+        }
+      } else {
+        video.pause();
+      }
+    });
+  };
+
+  const closeCommentSheets = () => {
+    reelCommentSheets.forEach((sheet) => sheet.classList.add('hidden'));
+    document.body.classList.remove('overflow-hidden');
+    playCurrentReel();
+  };
+
+  const scrollToReel = (index) => {
+    if (index < 0 || index >= reelItems.length) return;
+    currentReelIndex = index;
+    reelItems[index].scrollIntoView({ behavior: 'smooth', block: 'start' });
+    updateNavState();
+    playCurrentReel();
+  };
+
+  const setCurrentReel = (index) => {
+    if (index < 0 || index >= reelItems.length) return;
+    currentReelIndex = index;
+    updateNavState();
+    playCurrentReel();
+  };
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      let bestEntry = null;
+      entries.forEach((entry) => {
+        if (!bestEntry || entry.intersectionRatio > bestEntry.intersectionRatio) {
+          bestEntry = entry;
+        }
+      });
+      if (!bestEntry || !bestEntry.isIntersecting) return;
+      const bestIndex = reelItems.indexOf(bestEntry.target);
+      if (bestIndex >= 0 && bestIndex !== currentReelIndex) {
+        setCurrentReel(bestIndex);
+      }
+    },
+    {
+      root: reelViewerList,
+      threshold: [0.45, 0.7, 0.92],
+    }
+  );
+
+  reelItems.forEach((item, index) => {
+    observer.observe(item);
+    const video = reelVideos[index];
+    if (!video) return;
+    video.addEventListener('click', () => {
+      reelsPaused = !reelsPaused;
+      updateToolbarState();
+      playCurrentReel();
+    });
+    video.addEventListener('ended', () => {
+      if (index < reelItems.length - 1) {
+        scrollToReel(index + 1);
+      }
+    });
+  });
+
+  reelCommentToggles.forEach((button) => {
+    button.addEventListener('click', () => {
+      const sheetId = button.dataset.commentSheet;
+      const targetSheet = document.getElementById(sheetId);
+      if (!targetSheet) return;
+      reelVideos.forEach((video) => video && video.pause());
+      reelCommentSheets.forEach((sheet) => {
+        sheet.classList.toggle('hidden', sheet !== targetSheet);
+      });
+      document.body.classList.add('overflow-hidden');
+    });
+  });
+
+  reelCommentSheets.forEach((sheet) => {
+    sheet.addEventListener('click', () => closeCommentSheets());
+    sheet.querySelectorAll('[data-comment-sheet-dialog]').forEach((dialog) => {
+      dialog.addEventListener('click', (event) => event.stopPropagation());
+    });
+    sheet.querySelectorAll('[data-comment-close]').forEach((button) => {
+      button.addEventListener('click', () => closeCommentSheets());
+    });
+  });
+
+  if (reelPlayButton) {
+    reelPlayButton.addEventListener('click', () => {
+      reelsPaused = !reelsPaused;
+      updateToolbarState();
+      playCurrentReel();
+    });
+  }
+
+  if (reelMuteButton) {
+    reelMuteButton.addEventListener('click', () => {
+      reelsMuted = !reelsMuted;
+      updateToolbarState();
+      playCurrentReel();
+    });
+  }
+
+  if (reelPrevButton) {
+    reelPrevButton.addEventListener('click', () => scrollToReel(currentReelIndex - 1));
+  }
+
+  if (reelNextButton) {
+    reelNextButton.addEventListener('click', () => scrollToReel(currentReelIndex + 1));
+  }
+
+  const hash = window.location.hash;
+  const hashIndex = reelItems.findIndex((item) => `#${item.id}` === hash);
+  if (hashIndex >= 0) {
+    currentReelIndex = hashIndex;
+    reelItems[hashIndex].scrollIntoView({ behavior: 'auto', block: 'start' });
+  }
+
+  updateToolbarState();
+  updateNavState();
+  playCurrentReel();
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      closeCommentSheets();
+    }
+  });
+}
+
+/* ── Feed post videos ─────────────────────────────────────────
+ * Rules:
+ *  1. When one video starts playing → pause all other feed videos
+ *  2. When a video scrolls out of view → pause it automatically
+ * ─────────────────────────────────────────────────────────── */
+(function () {
+  const feedVideos = Array.from(document.querySelectorAll('[data-feed-video]'));
+  if (!feedVideos.length) return;
+
+  /* Rule 1 — exclusive playback */
+  feedVideos.forEach(video => {
+    video.addEventListener('play', () => {
+      feedVideos.forEach(other => {
+        if (other !== video && !other.paused) {
+          other.pause();
+          other.currentTime = 0;
+        }
+      });
+    });
+  });
+
+  /* Rule 2 — pause when scrolled out of view */
+  if ('IntersectionObserver' in window) {
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting && !entry.target.paused) {
+          entry.target.pause();
+          entry.target.currentTime = 0;
+        }
+      });
+    }, { threshold: 0.15 });
+
+    feedVideos.forEach(v => obs.observe(v));
+  }
+})();
+
+/* ── YouTube iframe pause on scroll ──────────────────────────── */
+(function () {
+  const ytFrames = Array.from(document.querySelectorAll('[data-yt-iframe]'));
+  if (!ytFrames.length) return;
+
+  const ytPlayers = {};
+
+  window.onYouTubeIframeAPIReady = function () {
+    ytFrames.forEach(function (iframe) {
+      ytPlayers[iframe.id] = new YT.Player(iframe.id, {});
+    });
+  };
+
+  /* Load YouTube IFrame API once */
+  if (!document.getElementById('yt-iframe-api')) {
+    var tag = document.createElement('script');
+    tag.id = 'yt-iframe-api';
+    tag.src = 'https://www.youtube.com/iframe_api';
+    document.head.appendChild(tag);
+  }
+
+  if ('IntersectionObserver' in window) {
+    const ytObs = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (!entry.isIntersecting) {
+          const player = ytPlayers[entry.target.id];
+          if (player && typeof player.pauseVideo === 'function') {
+            player.pauseVideo();
+          }
+        }
+      });
+    }, { threshold: 0.2 });
+
+    ytFrames.forEach(function (el) { ytObs.observe(el); });
+  }
+})();
+
+/* ── Composer collapse (mobile) ─────────────────────────────── */
+(function () {
+  const trigger = document.getElementById('composer-trigger');
+  const body    = document.getElementById('composer-body');
+  if (!trigger || !body) return;
+  trigger.addEventListener('click', function () {
+    body.classList.add('open');
+    trigger.style.display = 'none';
+    body.querySelector('input[name="title"]')?.focus();
+  });
+})();
+</script>
+{% endblock %}

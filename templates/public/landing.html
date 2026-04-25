@@ -1,0 +1,426 @@
+{% extends "auth_base.html" %}
+{% block title %}Only Scouts Academy — Learn Scouting Skills Online{% endblock %}
+{% block meta_description %}Only Scouts Academy — micro-learning, digital badges, and leadership tools for scouts worldwide. Join 7,500+ active scouts. Available in Arabic, French, English, and Spanish.{% endblock %}
+{% block og_title %}Only Scouts Academy — Learn Scouting Skills Online{% endblock %}
+{% block meta_robots %}index, follow{% endblock %}
+
+{% block head_extra %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "EducationalOrganization",
+  "name": "Only Scouts Academy",
+  "url": "{{ request.url_root }}",
+  "description": "A digital learning platform for scouts with micro-learning, digital badges, leadership management, and multilingual access.",
+  "logo": "{{ url_for('static', filename='assets/logo.jpg', _external=True) }}",
+  "foundingDate": "2025",
+  "knowsLanguage": ["ar", "en", "fr", "es"],
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD",
+    "availability": "https://schema.org/InStock"
+  }
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen font-sans" style="background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 40%, #faf5ff 100%);">
+
+  <!-- Navbar -->
+  <header style="border-bottom: 1px solid #e9d5ff;">
+    <div class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+      <!-- Logo -->
+      <a href="{{ url_for('misc.landing') }}" class="flex items-center gap-3">
+        <div class="flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl bg-white shadow-lg" style="border: 2px solid #a78bfa;">
+          <img src="{{ url_for('static', filename='assets/logo.jpg') }}" alt="Logo" class="h-full w-full object-cover" loading="lazy" />
+        </div>
+        <span class="text-xl font-extrabold" style="color: #1e1b4b;">Only Scouts Academy</span>
+      </a>
+
+      <!-- Nav Links -->
+      <nav class="hidden items-center gap-8 text-sm font-semibold lg:flex" style="color: #374151;">
+        <a href="#home" class="transition hover:text-violet-600">{{ _('Home') }}</a>
+        <a href="#features" class="transition hover:text-violet-600">{{ _('Features') }}</a>
+        <a href="#roles" class="transition hover:text-violet-600">{{ _('Roles') }}</a>
+        <a href="#contact" class="transition hover:text-violet-600">{{ _('Contact') }}</a>
+        <a href="{{ url_for('auth.login') }}" class="transition" style="color: #7c3aed; font-weight:800;">{{ _('Sign In') }}</a>
+      </nav>
+
+      <!-- Language + CTA -->
+      <div class="flex items-center gap-3">
+        <!-- Globe language switcher -->
+        <div class="relative">
+          <button id="landing-lang-btn"
+                  class="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-md transition hover:bg-slate-50"
+                  style="border:1px solid #e9d5ff;">
+            <iconify-icon icon="solar:global-bold-duotone" class="text-xl" style="color:#7c3aed;"></iconify-icon>
+          </button>
+          <div id="landing-lang-panel"
+               class="absolute end-0 top-12 z-50 hidden w-48 overflow-hidden rounded-2xl bg-white shadow-xl"
+               style="border:1px solid #e9d5ff;">
+            {% for code, label, flag in [('ar','العربية','MA'),('en','English','GB'),('fr','Français','FR'),('es','Español','ES')] %}
+            <a href="{{ url_for('auth.set_language', lang=code) }}"
+               class="flex items-center gap-3 px-4 py-2.5 text-sm transition hover:bg-slate-50"
+               style="{{ 'font-weight:700; color:#7c3aed;' if current_locale == code else 'color:#374151;' }}">
+              <span class="text-xs font-bold w-6" style="color:#9ca3af;">{{ flag }}</span>
+              <span>{{ label }}</span>
+              {% if current_locale == code %}
+              <iconify-icon icon="solar:check-circle-bold-duotone" class="ms-auto" style="color:#7c3aed;"></iconify-icon>
+              {% endif %}
+            </a>
+            {% endfor %}
+          </div>
+        </div>
+        <a href="{{ url_for('auth.register') }}"
+           class="flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold text-white transition hover:opacity-90"
+           style="background: linear-gradient(90deg,#7c3aed,#a855f7);">
+          {{ _('Get Started') }}
+          <span class="flex h-6 w-6 items-center justify-center rounded-full bg-white/20">&#9654;</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <main id="home" class="mx-auto max-w-7xl px-6 py-16 lg:py-24">
+    <div class="grid items-center gap-12 lg:grid-cols-2">
+
+      <!-- Left: Text -->
+      <div>
+        <div class="mb-5 inline-block rounded-full px-5 py-2 text-sm font-semibold" style="background:#ede9fe; color:#6d28d9; border:1px solid #c4b5fd;">
+          {{ _('Allow the scout to lead and the learner to grow.') }}
+        </div>
+        <h1 class="text-5xl font-black leading-tight lg:text-6xl" style="color:#1e1b4b;">
+          {{ _('Learn Your') }}<br>
+          <span>{{ _('Desired Skill') }}</span><br>
+          {{ _('With The Best') }}
+        </h1>
+        <p class="mt-6 max-w-lg text-base leading-8 font-medium" style="border-left: 4px solid #7c3aed; padding-left: 16px; color:#4b5563;">
+          {{ _("We don't simply give scouts lectures; we provide them with real-life experiences, interactive modules, and a rich scouting journey from start to finish.") }}
+        </p>
+        <div class="mt-8 flex flex-wrap items-center gap-4">
+          <a href="{{ url_for('auth.register') }}"
+             class="flex items-center gap-2 rounded-full px-7 py-3.5 text-sm font-bold text-white shadow-lg transition hover:opacity-90"
+             style="background: linear-gradient(90deg,#7c3aed,#a855f7); box-shadow: 0 8px 30px rgba(124,58,237,0.4);">
+            {{ _('Get Started') }}
+            <span class="flex h-6 w-6 items-center justify-center rounded-full bg-white/20">&#9654;</span>
+          </a>
+          <a href="{{ url_for('auth.login') }}"
+             class="rounded-full border px-7 py-3.5 text-sm font-bold transition hover:bg-violet-50"
+             style="border-color:#7c3aed; color:#7c3aed;">
+            {{ _('Access Platform') }}
+          </a>
+        </div>
+
+        <!-- Stats -->
+        <div class="mt-12 flex flex-wrap gap-10">
+          <div class="flex items-center gap-3">
+            <div class="flex h-10 w-10 items-center justify-center rounded-full" style="background:#ede9fe;">
+              <iconify-icon icon="solar:users-group-rounded-bold-duotone" class="text-xl" style="color:#7c3aed;"></iconify-icon>
+            </div>
+            <div>
+              <div class="text-2xl font-black" style="color:#1e1b4b;">7.5K+</div>
+              <div class="text-xs font-medium" style="color:#6b7280;">{{ _('Total active scouts taking gifted courses') }}</div>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="flex h-10 w-10 items-center justify-center rounded-full" style="background:#d1fae5;">
+              <iconify-icon icon="solar:verified-check-bold-duotone" class="text-xl" style="color:#059669;"></iconify-icon>
+            </div>
+            <div>
+              <div class="text-2xl font-black" style="color:#1e1b4b;">50K+</div>
+              <div class="text-xs font-medium" style="color:#6b7280;">{{ _('Available field programs and increasing') }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Visual Cards + Decorative -->
+      <div class="relative hidden lg:block" style="min-height: 480px;">
+
+        <!-- Big teal circle background -->
+        <div class="absolute rounded-full" style="width:340px; height:340px; background:linear-gradient(135deg,#a7f3d0,#6ee7b7); top:40px; right:0; z-index:0; opacity:0.5;"></div>
+
+        <!-- Purple sphere decoration -->
+        <div class="absolute rounded-full" style="width:50px; height:50px; background:linear-gradient(135deg,#c084fc,#7c3aed); top:10px; left:120px; z-index:2; box-shadow:0 8px 20px rgba(124,58,237,0.4);"></div>
+
+        <!-- Wavy lines decoration -->
+        <div class="absolute" style="top:20px; right:20px; z-index:2; color:#7c3aed; font-size:28px; letter-spacing:4px; opacity:0.6;">≋≋≋</div>
+
+        <!-- Dot grid decoration -->
+        <div class="absolute grid gap-2" style="bottom:30px; right:10px; z-index:1; display:grid; grid-template-columns: repeat(5,8px); gap:6px;">
+          {% for i in range(25) %}
+          <div style="width:6px; height:6px; border-radius:50%; background:#a78bfa; opacity:0.5;"></div>
+          {% endfor %}
+        </div>
+
+        <!-- Card 1: Micro-learning -->
+        <div class="absolute rounded-3xl p-4 shadow-xl" style="background:linear-gradient(135deg,#7c3aed,#a855f7); width:180px; top:60px; left:30px; z-index:3;">
+          <div class="flex h-8 w-8 items-center justify-center rounded-xl bg-white/20">
+            <iconify-icon icon="solar:notebook-bookmark-bold-duotone" class="text-xl text-white"></iconify-icon>
+          </div>
+          <div class="mt-3 text-sm font-bold text-white">{{ _('Micro-learning') }}</div>
+          <a href="{{ url_for('auth.register') }}" class="mt-1 text-xs font-semibold" style="color:#e9d5ff;">{{ _('Learn more →') }}</a>
+        </div>
+
+        <!-- Card 2: Badge Journey -->
+        <div class="absolute rounded-3xl p-4 shadow-xl" style="background:#1e1b4b; width:180px; top:50px; left:230px; z-index:3;">
+          <div class="flex h-8 w-8 items-center justify-center rounded-xl" style="background:#7c3aed33;">
+            <iconify-icon icon="solar:medal-ribbon-bold-duotone" class="text-xl" style="color:#a78bfa;"></iconify-icon>
+          </div>
+          <div class="mt-3 text-sm font-bold text-white">{{ _('Badge Journey') }}</div>
+          <a href="{{ url_for('auth.register') }}" class="mt-1 text-xs font-semibold" style="color:#a78bfa;">{{ _('Learn more →') }}</a>
+        </div>
+
+        <!-- Card 3: Programs -->
+        <div class="absolute rounded-3xl p-5 shadow-2xl" style="background:#fff; width:220px; top:220px; left:140px; z-index:4; border:1px solid #e9d5ff;">
+          <div class="text-base font-black" style="color:#1e1b4b;">{{ _('Programs') }}</div>
+          <div class="mt-1 text-xs" style="color:#6b7280;">{{ _('Our programs are designed to develop your scouts') }}</div>
+          <div class="mt-3 flex -space-x-2">
+            <div class="h-7 w-7 rounded-full flex items-center justify-center text-xs font-bold text-white" style="background:#7c3aed;">S</div>
+            <div class="h-7 w-7 rounded-full flex items-center justify-center text-xs font-bold text-white" style="background:#a855f7;">L</div>
+            <div class="h-7 w-7 rounded-full flex items-center justify-center text-xs font-bold text-white" style="background:#059669;">A</div>
+          </div>
+          <a href="{{ url_for('auth.register') }}"
+             class="mt-4 block w-full rounded-2xl py-2 text-center text-xs font-bold text-white transition hover:opacity-90"
+             style="background:linear-gradient(90deg,#7c3aed,#a855f7);">
+            {{ _('View Details') }}
+          </a>
+        </div>
+
+        <!-- Heart decoration -->
+        <div class="absolute text-4xl" style="bottom:140px; left:40px; z-index:2; filter: drop-shadow(0 4px 8px rgba(236,72,153,0.4));">
+          <iconify-icon icon="solar:heart-bold-duotone" style="color:#f472b6; font-size:40px;"></iconify-icon>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Values Bar -->
+  <section style="background:#fff; border-top:1px solid #e9d5ff; border-bottom:1px solid #e9d5ff;">
+    <div class="mx-auto max-w-7xl px-6 py-10 grid gap-8 sm:grid-cols-3">
+      <div class="flex items-start gap-4">
+        <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl" style="background:#ede9fe;">
+          <iconify-icon icon="solar:bolt-bold-duotone" class="text-2xl" style="color:#7c3aed;"></iconify-icon>
+        </div>
+        <div>
+          <div class="text-lg font-black" style="color:#1e1b4b;">{{ _('Flexible') }}</div>
+          <p class="mt-1 text-sm leading-6" style="color:#6b7280;">{{ _('Learn the Scout Way anywhere, anytime, and at the rhythm that fits real life.') }}</p>
+        </div>
+      </div>
+      <div class="flex items-start gap-4">
+        <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl" style="background:#d1fae5;">
+          <iconify-icon icon="solar:star-bold-duotone" class="text-2xl" style="color:#059669;"></iconify-icon>
+        </div>
+        <div>
+          <div class="text-lg font-black" style="color:#1e1b4b;">{{ _('High Quality') }}</div>
+          <p class="mt-1 text-sm leading-6" style="color:#6b7280;">{{ _('Every lesson is built to combine technical accuracy, clarity, and visual engagement.') }}</p>
+        </div>
+      </div>
+      <div class="flex items-start gap-4">
+        <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl" style="background:#fce7f3;">
+          <iconify-icon icon="solar:shield-check-bold-duotone" class="text-2xl" style="color:#db2777;"></iconify-icon>
+        </div>
+        <div>
+          <div class="text-lg font-black" style="color:#1e1b4b;">{{ _('Safe') }}</div>
+          <p class="mt-1 text-sm leading-6" style="color:#6b7280;">{{ _('A dedicated scouting platform creates a focused and positive environment for growth.') }}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section id="features" class="mx-auto max-w-7xl px-6 py-20">
+    <div class="text-center max-w-2xl mx-auto mb-12">
+      <div class="inline-block rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-widest mb-4" style="background:#ede9fe; color:#6d28d9;">
+        {{ _('Our Vision') }}
+      </div>
+      <h2 class="text-3xl font-black lg:text-4xl" style="color:#1e1b4b;">{{ _('A digital academy built to make scouting skills measurable, motivating, and future-ready.') }}</h2>
+      <p class="mt-4 text-base leading-8" style="color:#6b7280;">{{ _('Scout excellence is no longer an option; it is a path we create together.') }}</p>
+    </div>
+
+    <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+      <div class="rounded-3xl p-6 transition hover:-translate-y-1 hover:shadow-xl" style="background:#fff; border:1px solid #e9d5ff;">
+        <div class="flex h-12 w-12 items-center justify-center rounded-2xl mb-4" style="background:#ede9fe;">
+          <iconify-icon icon="solar:clipboard-text-bold-duotone" class="text-2xl" style="color:#7c3aed;"></iconify-icon>
+        </div>
+        <h3 class="text-lg font-bold" style="color:#1e1b4b;">{{ _('Micro-learning') }}</h3>
+        <p class="mt-2 text-sm leading-7" style="color:#6b7280;">{{ _('Short, intensive learning modules that maximize focus, speed, and real comprehension.') }}</p>
+      </div>
+      <div class="rounded-3xl p-6 transition hover:-translate-y-1 hover:shadow-xl" style="background:#fff; border:1px solid #e9d5ff;">
+        <div class="flex h-12 w-12 items-center justify-center rounded-2xl mb-4" style="background:#d1fae5;">
+          <iconify-icon icon="solar:medal-ribbon-bold-duotone" class="text-2xl" style="color:#059669;"></iconify-icon>
+        </div>
+        <h3 class="text-lg font-bold" style="color:#1e1b4b;">{{ _('Digital Badge System') }}</h3>
+        <p class="mt-2 text-sm leading-7" style="color:#6b7280;">{{ _('Points and badges reflect real progress and make each new skill feel valuable and rewarding.') }}</p>
+      </div>
+      <div class="rounded-3xl p-6 transition hover:-translate-y-1 hover:shadow-xl" style="background:#fff; border:1px solid #e9d5ff;">
+        <div class="flex h-12 w-12 items-center justify-center rounded-2xl mb-4" style="background:#fef3c7;">
+          <iconify-icon icon="solar:chart-bold-duotone" class="text-2xl" style="color:#d97706;"></iconify-icon>
+        </div>
+        <h3 class="text-lg font-bold" style="color:#1e1b4b;">{{ _('Leadership Management') }}</h3>
+        <p class="mt-2 text-sm leading-7" style="color:#6b7280;">{{ _("Smart dashboards give leaders a complete picture of every scout's development.") }}</p>
+      </div>
+      <div class="rounded-3xl p-6 transition hover:-translate-y-1 hover:shadow-xl" style="background:#fff; border:1px solid #e9d5ff;">
+        <div class="flex h-12 w-12 items-center justify-center rounded-2xl mb-4" style="background:#fce7f3;">
+          <iconify-icon icon="solar:global-bold-duotone" class="text-2xl" style="color:#db2777;"></iconify-icon>
+        </div>
+        <h3 class="text-lg font-bold" style="color:#1e1b4b;">{{ _('Multilingual Access') }}</h3>
+        <p class="mt-2 text-sm leading-7" style="color:#6b7280;">{{ _('Arabic, French, and English help scouts connect with global practices beyond barriers.') }}</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Roles Section -->
+  <section id="roles" class="mx-auto max-w-7xl px-6 pb-20">
+    <div class="grid gap-6 lg:grid-cols-3">
+      <div class="rounded-3xl p-7" style="background:linear-gradient(135deg,#7c3aed,#a855f7);">
+        <div class="text-xs font-bold uppercase tracking-widest mb-3" style="color:#e9d5ff;">{{ _('Ultimate Flexibility') }}</div>
+        <h3 class="text-2xl font-black text-white">{{ _('Learn wherever the scouting day takes you') }}</h3>
+        <p class="mt-4 text-sm leading-7" style="color:#ddd6fe;">{{ _('Whether on the bus, at home, or just before camp, the platform keeps scouting skills within reach.') }}</p>
+      </div>
+      <div class="rounded-3xl p-7" style="background:#fff; border:1px solid #e9d5ff;">
+        <div class="text-xs font-bold uppercase tracking-widest mb-3" style="color:#059669;">{{ _('Quality Content') }}</div>
+        <h3 class="text-2xl font-black" style="color:#1e1b4b;">{{ _('International standards with real visual appeal') }}</h3>
+        <p class="mt-4 text-sm leading-7" style="color:#6b7280;">{{ _('Lessons are crafted to balance technical precision, engaging presentation, and meaningful scouting value.') }}</p>
+      </div>
+      <div class="rounded-3xl p-7" style="background:#1e1b4b;">
+        <div class="text-xs font-bold uppercase tracking-widest mb-3" style="color:#a78bfa;">{{ _('Safe Environment') }}</div>
+        <h3 class="text-2xl font-black text-white">{{ _('A platform dedicated exclusively to scouts') }}</h3>
+        <p class="mt-4 text-sm leading-7" style="color:#a78bfa;">{{ _('The experience stays positive, focused, and free from the distractions of the wider internet.') }}</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Banner -->
+  <section id="access" class="mx-auto max-w-7xl px-6 pb-20">
+    <div class="rounded-3xl p-10 text-center" style="background:linear-gradient(135deg,#7c3aed,#a855f7); box-shadow: 0 20px 60px rgba(124,58,237,0.3);">
+      <h2 class="text-3xl font-black text-white lg:text-4xl">{{ _('Ready to start your scouting journey?') }}</h2>
+      <p class="mt-4 text-base" style="color:#e9d5ff;">{{ _('Join thousands of scouts already learning on the platform.') }}</p>
+      <div class="mt-8 flex flex-wrap items-center justify-center gap-4">
+        <a href="{{ url_for('auth.register') }}"
+           class="rounded-full bg-white px-8 py-3.5 text-sm font-bold transition hover:bg-violet-50"
+           style="color:#7c3aed;">
+          {{ _('Create an Account') }}
+        </a>
+        <a href="{{ url_for('auth.login') }}"
+           class="rounded-full border border-white/30 bg-white/10 px-8 py-3.5 text-sm font-bold text-white transition hover:bg-white/20">
+          {{ _('Sign In') }}
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Contact Us Section -->
+  <section id="contact" class="mx-auto max-w-7xl px-6 pb-20">
+    <div class="rounded-3xl p-10 lg:p-14" style="background:#fff; border:1px solid #e9d5ff; box-shadow:0 20px 60px rgba(124,58,237,0.08);">
+      <div class="text-center max-w-xl mx-auto mb-10">
+        <div class="inline-block rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-widest mb-4" style="background:#ede9fe; color:#6d28d9;">
+          {{ _('Get In Touch') }}
+        </div>
+        <h2 class="text-3xl font-black lg:text-4xl" style="color:#1e1b4b;">{{ _('Contact Us') }}</h2>
+        <p class="mt-3 text-base leading-7" style="color:#6b7280;">{{ _("Have a question or want to learn more? Send us a message and we'll get back to you.") }}</p>
+      </div>
+
+      <form method="POST" action="{{ url_for('contact.quick_send') }}" class="max-w-2xl mx-auto space-y-5">
+        <div class="grid gap-5 sm:grid-cols-2">
+          <div>
+            <label class="mb-2 block text-sm font-semibold" style="color:#374151;">{{ _('Your Name') }}</label>
+            <input type="text" name="name" required
+                   class="w-full rounded-2xl px-4 py-3.5 text-sm transition focus:outline-none"
+                   style="border:1.5px solid #e9d5ff; background:#faf5ff; color:#1e1b4b;"
+                   onfocus="this.style.borderColor='#7c3aed'; this.style.boxShadow='0 0 0 4px rgba(124,58,237,0.1)'"
+                   onblur="this.style.borderColor='#e9d5ff'; this.style.boxShadow='none'"
+                   placeholder="{{ _('Your full name') }}" />
+          </div>
+          <div>
+            <label class="mb-2 block text-sm font-semibold" style="color:#374151;">{{ _('Email Address') }}</label>
+            <input type="email" name="email" required
+                   class="w-full rounded-2xl px-4 py-3.5 text-sm transition focus:outline-none"
+                   style="border:1.5px solid #e9d5ff; background:#faf5ff; color:#1e1b4b;"
+                   onfocus="this.style.borderColor='#7c3aed'; this.style.boxShadow='0 0 0 4px rgba(124,58,237,0.1)'"
+                   onblur="this.style.borderColor='#e9d5ff'; this.style.boxShadow='none'"
+                   placeholder="{{ _('you@example.com') }}" />
+          </div>
+        </div>
+        <div>
+          <label class="mb-2 block text-sm font-semibold" style="color:#374151;">{{ _('Message') }}</label>
+          <textarea name="message" rows="5" required
+                    class="w-full rounded-2xl px-4 py-3.5 text-sm transition focus:outline-none resize-none"
+                    style="border:1.5px solid #e9d5ff; background:#faf5ff; color:#1e1b4b;"
+                    onfocus="this.style.borderColor='#7c3aed'; this.style.boxShadow='0 0 0 4px rgba(124,58,237,0.1)'"
+                    onblur="this.style.borderColor='#e9d5ff'; this.style.boxShadow='none'"
+                    placeholder="{{ _('Write your message here...') }}"></textarea>
+        </div>
+        <div class="text-center">
+          <button type="submit"
+                  class="inline-flex items-center gap-2 rounded-full px-10 py-3.5 text-sm font-bold text-white transition hover:opacity-90"
+                  style="background:linear-gradient(90deg,#7c3aed,#a855f7); box-shadow:0 8px 24px rgba(124,58,237,0.35);">
+            <iconify-icon icon="solar:plain-bold-duotone" class="text-lg"></iconify-icon>
+            {{ _('Send Message') }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer style="background:#1e1b4b; border-top:1px solid #312e81;">
+    <div class="mx-auto max-w-7xl px-6 py-12">
+      <div class="grid gap-10 md:grid-cols-2 xl:grid-cols-4">
+        <div class="xl:col-span-2">
+          <div class="flex items-center gap-3">
+            <div class="flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl bg-white shadow-lg">
+              <img src="{{ url_for('static', filename='assets/logo.jpg') }}" alt="Logo" class="h-full w-full object-cover" loading="lazy" />
+            </div>
+            <div>
+              <div class="text-lg font-extrabold text-white">Only Scouts Academy</div>
+              <div class="text-xs font-medium uppercase tracking-widest" style="color:#a78bfa;">{{ _('Scouting Tradition Meets Future Innovation') }}</div>
+            </div>
+          </div>
+          <p class="mt-5 max-w-sm text-sm leading-7" style="color:#a78bfa;">{{ _('Only Scouts Academy brings together micro-learning, digital achievement systems, smart leadership insight, and multilingual scouting access in one professional digital experience.') }}</p>
+        </div>
+
+        <div>
+          <div class="text-sm font-bold uppercase tracking-widest mb-4 text-white">{{ _('Platform') }}</div>
+          <div class="space-y-3 text-sm" style="color:#a78bfa;">
+            <a href="#features" class="block transition hover:text-white">{{ _('Features') }}</a>
+            <a href="#roles" class="block transition hover:text-white">{{ _('Roles') }}</a>
+            <a href="#access" class="block transition hover:text-white">{{ _('Access') }}</a>
+          </div>
+        </div>
+
+        <div>
+          <div class="text-sm font-bold uppercase tracking-widest mb-4 text-white">{{ _('Get Started') }}</div>
+          <div class="space-y-3 text-sm" style="color:#a78bfa;">
+            <a href="{{ url_for('auth.login') }}" class="block transition hover:text-white">{{ _('Sign In') }}</a>
+            <a href="{{ url_for('auth.register') }}" class="block transition hover:text-white">{{ _('Create Account') }}</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-10 flex flex-col gap-4 pt-6 text-sm sm:flex-row sm:items-center sm:justify-between" style="border-top:1px solid #312e81; color:#6d28d9;">
+        <div style="color:#a78bfa;">Only Scouts Academy &copy; 2025</div>
+        <div style="color:#a78bfa;">{{ _('Scout excellence is a path we create together.') }}</div>
+      </div>
+    </div>
+  </footer>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const landingLangBtn = document.getElementById('landing-lang-btn');
+const landingLangPanel = document.getElementById('landing-lang-panel');
+if (landingLangBtn && landingLangPanel) {
+  landingLangBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    landingLangPanel.classList.toggle('hidden');
+  });
+  document.addEventListener('click', () => landingLangPanel.classList.add('hidden'));
+}
+</script>
+{% endblock %}

@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% block title %}Admin Users{% endblock %}
+{% block content %}
+<section class="p-4 md:p-8">
+  <div class="max-w-6xl mx-auto">
+    <div class="flex items-center justify-between gap-4 mb-6">
+      <div>
+        <h1 class="text-2xl font-bold text-slate-900">Users</h1>
+        <p class="text-sm text-slate-500">Manage account status and review recent registrations.</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <a href="{{ url_for('admin.grant_access') }}" class="text-sm font-semibold text-primary-600 hover:text-primary-700">Grant access</a>
+        <a href="{{ url_for('admin.dashboard') }}" class="text-sm text-blue-600 hover:text-blue-700">Back to admin</a>
+      </div>
+    </div>
+
+    <div class="card overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-sm">
+          <thead class="bg-slate-50 text-slate-500">
+            <tr>
+              <th class="px-4 py-3 text-left">User</th>
+              <th class="px-4 py-3 text-left">Role</th>
+              <th class="px-4 py-3 text-left">XP</th>
+              <th class="px-4 py-3 text-left">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for user in users %}
+            <tr class="border-t border-slate-100">
+              <td class="px-4 py-3">
+                <div class="font-medium text-slate-900">{{ user.full_name or user.username }}</div>
+                <div class="text-xs text-slate-500">{{ user.email }}</div>
+              </td>
+              <td class="px-4 py-3 text-slate-600">{{ user.role }}</td>
+              <td class="px-4 py-3 text-slate-600">{{ user.level_points }}</td>
+              <td class="px-4 py-3">
+                <span class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold {{ 'bg-green-100 text-green-700' if user.is_active else 'bg-red-100 text-red-700' }}">
+                  {{ 'Active' if user.is_active else 'Disabled' }}
+                </span>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="4" class="px-4 py-6 text-center text-slate-500">No users found.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="mt-4 flex items-center justify-between text-sm text-slate-500">
+      <span>Page {{ page }} of {{ total_pages }}</span>
+      <div class="flex items-center gap-3">
+        {% if page > 1 %}
+        <a href="{{ url_for('admin.users', page=page-1) }}" class="text-blue-600 hover:text-blue-700">Previous</a>
+        {% endif %}
+        {% if page < total_pages %}
+        <a href="{{ url_for('admin.users', page=page+1) }}" class="text-blue-600 hover:text-blue-700">Next</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="{{ current_locale }}" dir="{{ 'rtl' if is_rtl else 'ltr' }}">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Only Scouts Academy{% endblock %}</title>
+
+  {# ── SEO: meta, canonical, OG, Twitter Card, hreflang ── #}
+  <meta name="description" content="{% block meta_description %}Only Scouts Academy — a digital learning platform for scouts with micro-learning, digital badges, and multilingual access.{% endblock %}" />
+  <meta name="robots" content="{% block meta_robots %}index, follow{% endblock %}" />
+  <link rel="canonical" href="{{ request.url_root.rstrip('/') }}{{ request.path }}" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="{% block og_title %}Only Scouts Academy{% endblock %}" />
+  <meta property="og:description" content="{{ self.meta_description() }}" />
+  <meta property="og:url" content="{{ request.url }}" />
+  <meta property="og:image" content="{{ url_for('static', filename='assets/logo.jpg', _external=True) }}" />
+  <meta property="og:site_name" content="Only Scouts Academy" />
+
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="{{ self.og_title() }}" />
+  <meta name="twitter:description" content="{{ self.meta_description() }}" />
+
+  {% for lang_code in ['en', 'ar', 'fr', 'es'] %}
+  <link rel="alternate" hreflang="{{ lang_code }}" href="{{ request.url_root.rstrip('/') }}{{ request.path }}?lang={{ lang_code }}" />
+  {% endfor %}
+  <link rel="alternate" hreflang="x-default" href="{{ request.url_root }}" />
+
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='assets/logoCerti.png') }}" />
+  {% block head_extra %}{% endblock %}
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js"></script>
+  <style>
+    body { font-family:'IBM Plex Sans Arabic','Outfit',sans-serif; }
+    .xp-badge { background:linear-gradient(135deg,#2563eb,#1e3a8a); color:#fff; }
+    @keyframes slideUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+    .animate-slide-up { animation:slideUp .4s ease-out; }
+    @keyframes bounceSub { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
+    .animate-bounce-subtle { animation:bounceSub 1.2s ease-in-out infinite; }
+    #toast-container { position:fixed; top:20px; right:20px; z-index:9999; }
+    html[dir="rtl"] #toast-container { right:auto; left:20px; }
+    .toast { animation:slideUp .35s ease-out; border-radius:12px; padding:14px 18px; margin-bottom:10px;
+             font-weight:500; font-size:14px; display:flex; align-items:center; gap:10px;
+             box-shadow:0 4px 20px rgba(0,0,0,.12); }
+  </style>
+</head>
+<body>
+<div id="toast-container"></div>
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+  <div id="flash-data" class="hidden">
+    {% for cat,msg in messages %}<span data-cat="{{ cat }}" data-msg="{{ msg }}"></span>{% endfor %}
+  </div>
+  {% endif %}
+{% endwith %}
+
+{% block content %}{% endblock %}
+
+<script>
+window.__CURRENT_LOCALE__ = {{ current_locale|tojson }};
+window.__UI_TRANSLATIONS__ = {{ ui_translations|tojson }};
+
+function translateUiString(value) {
+  if (!value || window.__CURRENT_LOCALE__ === 'en') return value;
+  const dictionary = (window.__UI_TRANSLATIONS__ || {})[window.__CURRENT_LOCALE__] || {};
+  const collapsed = value.replace(/\s+/g, ' ').trim();
+  if (!collapsed) return value;
+  const translated = dictionary[collapsed];
+  if (!translated) return value;
+  const leading = value.match(/^\s*/)?.[0] || '';
+  const trailing = value.match(/\s*$/)?.[0] || '';
+  return `${leading}${translated}${trailing}`;
+}
+
+function translateUiTree(root) {
+  if (!root || window.__CURRENT_LOCALE__ === 'en') return;
+
+  if (root.nodeType === Node.TEXT_NODE) {
+    const parent = root.parentElement;
+    if (!parent || parent.closest('[data-i18n-skip]')) return;
+    if (['SCRIPT', 'STYLE', 'NOSCRIPT', 'CODE', 'PRE', 'TEXTAREA'].includes(parent.tagName)) return;
+    const nextValue = translateUiString(root.nodeValue || '');
+    if (nextValue !== root.nodeValue) root.nodeValue = nextValue;
+    return;
+  }
+
+  if (root.nodeType !== Node.ELEMENT_NODE || root.hasAttribute('data-i18n-skip')) return;
+
+  ['placeholder', 'title', 'aria-label'].forEach((attr) => {
+    if (!root.hasAttribute(attr)) return;
+    const currentValue = root.getAttribute(attr);
+    const nextValue = translateUiString(currentValue || '');
+    if (nextValue !== currentValue) root.setAttribute(attr, nextValue);
+  });
+
+  if (root.tagName === 'INPUT') {
+    const type = (root.getAttribute('type') || '').toLowerCase();
+    if (['button', 'submit', 'reset'].includes(type) && root.hasAttribute('value')) {
+      const currentValue = root.getAttribute('value');
+      const nextValue = translateUiString(currentValue || '');
+      if (nextValue !== currentValue) root.setAttribute('value', nextValue);
+    }
+  }
+
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+  let node;
+  while ((node = walker.nextNode())) {
+    translateUiTree(node);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (window.__CURRENT_LOCALE__ !== 'en') {
+    document.title = translateUiString(document.title);
+    translateUiTree(document.body);
+  }
+
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.type === 'characterData') {
+        translateUiTree(mutation.target);
+        return;
+      }
+
+      mutation.addedNodes.forEach((node) => translateUiTree(node));
+    });
+  });
+
+  observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+});
+</script>
+
+<script>
+function showToast(msg,cat){
+  const colors={success:'background:#f0fdf4;color:#166534;border:1px solid #bbf7d0',danger:'background:#fef2f2;color:#991b1b;border:1px solid #fecaca',warning:'background:#fffbeb;color:#92400e;border:1px solid #fde68a',info:'background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe'};
+  const icons={success:'✅',danger:'❌',warning:'⚠️',info:'ℹ️'};
+  const el=document.createElement('div');
+  el.className='toast'; el.style.cssText=colors[cat]||colors.info;
+  el.innerHTML=`<span>${icons[cat]||'ℹ️'}</span><span>${msg}</span>`;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(()=>el.remove(),4000);
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  document.querySelectorAll('#flash-data [data-cat]').forEach(el=>showToast(el.dataset.msg,el.dataset.cat));
+});
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

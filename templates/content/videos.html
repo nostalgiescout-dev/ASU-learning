@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+{% block title %}{{ _('Videos') }}{% endblock %}
+
+{% block head_extra %}
+<style>
+  /* Each video card is a fully contained block — nothing bleeds out */
+  .video-card {
+    background: #fff;
+    border-radius: 20px;
+    overflow: hidden;           /* clips video + overlay inside */
+    box-shadow: 0 4px 20px rgba(15,23,42,.07);
+    transition: box-shadow .25s ease, transform .25s ease;
+    contain: layout style paint; /* paint-containment: card doesn't affect neighbours */
+    isolation: isolate;
+  }
+  .video-card:hover {
+    box-shadow: 0 10px 36px rgba(124,58,237,.18);
+    transform: translateY(-3px);
+  }
+
+  /* Wrapper enforces a fixed 16:9 box — video never escapes */
+  .video-ratio {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: #0a0a0f;
+    overflow: hidden;           /* hard clip — nothing overflows */
+  }
+
+  /* Video fills the ratio box absolutely — no collapse, no bleed */
+  .video-ratio video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    /*
+     * FIX: do NOT set will-change or transform here.
+     * Applying will-change to every video upfront promotes ALL of them to
+     * separate GPU compositing layers immediately — even the ones 1000px
+     * below the fold — exhausting VRAM and causing scroll jank.
+     * GPU promotion is applied via JavaScript only when a card is near the
+     * viewport (IntersectionObserver) and removed when it leaves.
+     */
+  }
+  /* Applied by JS when card is near viewport or playing */
+  .video-ratio video.gpu-promoted {
+    transform: translateZ(0);
+    will-change: transform;
+  }
+
+  /* Hover overlay */
+  .video-ratio .play-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,.4);
+    opacity: 0;
+    transition: opacity .2s ease;
+    z-index: 2;
+    cursor: pointer;
+  }
+  .video-card:hover .play-overlay { opacity: 1; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-8">
+
+  <!-- Header -->
+  <div class="flex flex-wrap items-center justify-between gap-3 mb-8">
+    <div>
+      <h1 class="font-display font-extrabold text-2xl text-slate-900">{{ _('Videos') }}</h1>
+      <p class="text-sm text-slate-500">{{ _('Watch and learn from our video library.') }}</p>
+    </div>
+    <span class="rounded-full px-4 py-1.5 text-sm font-bold"
+          style="background:#ede9fe; color:#7c3aed;">
+      {{ contents|length }} {{ _('videos') }}
+    </span>
+  </div>
+
+  {% if contents %}
+  <!-- Video Grid -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for c in contents %}
+    <div class="video-card">
+
+      <!-- Fixed-ratio video container -->
+      <div class="video-ratio">
+        <video preload="metadata" loop playsinline webkit-playsinline>
+          <source src="{{ c.media_url }}" type="video/mp4" />
+        </video>
+        <!-- Overlay — click plays inline -->
+        <div class="play-overlay" data-video-card-play>
+          <div class="flex h-14 w-14 items-center justify-center rounded-full"
+               style="background:rgba(124,58,237,0.9); box-shadow:0 4px 20px rgba(124,58,237,.5);">
+            <iconify-icon icon="solar:play-bold" class="text-2xl text-white ms-0.5"></iconify-icon>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card Body -->
+      <div class="p-4">
+        <h3 class="font-bold text-slate-800 text-sm leading-snug mb-1 truncate">{{ c.title }}</h3>
+        {% if c.description %}
+        <p class="text-xs text-slate-500 leading-relaxed line-clamp-2 mb-3">{{ c.description }}</p>
+        {% endif %}
+
+        <div class="flex items-center justify-between gap-2 mt-3">
+          <a href="{{ url_for('content.content_detail', content_type=c.type, content_id=c.id) }}"
+             class="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition hover:opacity-90"
+             style="background:linear-gradient(90deg,#7c3aed,#a855f7); color:#fff;">
+            <iconify-icon icon="solar:play-circle-bold" class="text-sm"></iconify-icon>
+            {{ _('Watch') }}
+          </a>
+          <span class="text-xs text-slate-400 flex items-center gap-1">
+            <iconify-icon icon="solar:video-library-bold-duotone" style="color:#a78bfa;"></iconify-icon>
+            {{ _('Video') }}
+          </span>
+        </div>
+      </div>
+
+    </div>
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <!-- Empty State -->
+  <div class="flex flex-col items-center justify-center py-24 text-center">
+    <div class="mb-5 flex h-20 w-20 items-center justify-center rounded-3xl"
+         style="background:rgba(124,58,237,0.12);">
+      <iconify-icon icon="solar:video-library-bold-duotone" class="text-4xl" style="color:#a78bfa;"></iconify-icon>
+    </div>
+    <h2 class="font-extrabold text-xl text-slate-800 mb-2">{{ _('No Videos Yet') }}</h2>
+    <p class="text-sm text-slate-500 max-w-xs">{{ _('Check back soon for new content.') }}</p>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+
+  /* ── helpers ──────────────────────────────────────────── */
+  function resetOverlay(overlay) {
+    if (!overlay) return;
+    const ic = overlay.querySelector('iconify-icon');
+    if (ic) ic.setAttribute('icon', 'solar:play-bold');
+    overlay.style.opacity = '';
+  }
+
+  function pauseAllExcept(keepVideo) {
+    document.querySelectorAll('.video-ratio video').forEach(v => {
+      if (v === keepVideo) return;
+      if (!v.paused) {
+        v.pause();
+        v.currentTime = 0;
+        /* remove GPU layer from videos no longer playing */
+        v.classList.remove('gpu-promoted');
+        resetOverlay(v.closest('.video-ratio')?.querySelector('[data-video-card-play]'));
+      }
+    });
+  }
+
+  /* ── click to play/pause ──────────────────────────────── */
+  document.querySelectorAll('[data-video-card-play]').forEach(overlay => {
+    overlay.addEventListener('click', () => {
+      const ratio  = overlay.closest('.video-ratio');
+      const video  = ratio.querySelector('video');
+      const iconEl = overlay.querySelector('iconify-icon');
+      if (!video) return;
+
+      if (video.paused) {
+        pauseAllExcept(video);
+        /*
+         * FIX: promote to GPU layer ONLY when actually playing,
+         * not on every card from the start.
+         */
+        video.classList.add('gpu-promoted');
+        video.play().catch(() => {});
+        iconEl.setAttribute('icon', 'solar:pause-bold');
+        overlay.style.opacity = '1';
+      } else {
+        video.pause();
+        video.classList.remove('gpu-promoted');
+        iconEl.setAttribute('icon', 'solar:play-bold');
+        overlay.style.opacity = '';
+      }
+    });
+  });
+
+  /* ── video ended ──────────────────────────────────────── */
+  document.querySelectorAll('.video-ratio video').forEach(video => {
+    video.addEventListener('ended', () => {
+      video.classList.remove('gpu-promoted');
+      resetOverlay(video.closest('.video-ratio')?.querySelector('[data-video-card-play]'));
+    });
+  });
+
+  /* ── pause all playing videos the moment user scrolls ────── */
+  function pauseAllVideos() {
+    document.querySelectorAll('.video-ratio video').forEach(v => {
+      if (!v.paused) {
+        v.pause();
+        v.currentTime = 0;
+        v.classList.remove('gpu-promoted');
+        resetOverlay(v.closest('.video-ratio')?.querySelector('[data-video-card-play]'));
+      }
+    });
+  }
+
+  /* capture:true catches scroll on ANY element (window, main, body, divs) */
+  window.addEventListener('scroll',   pauseAllVideos, { passive: true, capture: true });
+  document.addEventListener('scroll', pauseAllVideos, { passive: true, capture: true });
+
+})();
+</script>
+{% endblock %}

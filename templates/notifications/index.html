@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Notifications{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-5xl px-4 py-6 lg:px-8">
+  <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+    <div>
+      <h1 class="font-display text-2xl font-800 text-slate-900">Notifications</h1>
+      <p class="mt-1 text-sm text-slate-500">Updates from messages, friends, courses, library, posts, and platform activity.</p>
+    </div>
+    <div class="flex flex-wrap items-center gap-2">
+      <a href="{{ url_for('notifications.index') }}"
+         class="rounded-xl px-4 py-2 text-sm font-semibold transition {{ 'bg-primary-600 text-white' if not unread_only else 'border border-slate-200 bg-white text-slate-600 hover:border-primary-300' }}">
+        All
+      </a>
+      <a href="{{ url_for('notifications.index', filter='unread') }}"
+         class="rounded-xl px-4 py-2 text-sm font-semibold transition {{ 'bg-primary-600 text-white' if unread_only else 'border border-slate-200 bg-white text-slate-600 hover:border-primary-300' }}">
+        Unread
+      </a>
+      <form method="POST" action="{{ url_for('notifications.mark_all_read') }}">
+        <button type="submit" class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-primary-300 hover:text-primary-700">
+          Mark all read
+        </button>
+      </form>
+    </div>
+  </div>
+
+  {% if notifications %}
+  <div class="space-y-4">
+    {% for item in notifications %}
+    <article class="card overflow-hidden {{ 'ring-1 ring-primary-200' if not item.is_read else '' }}">
+      <div class="flex flex-col gap-4 p-5 md:flex-row md:items-start">
+        <div class="flex items-center gap-3 md:w-72 md:flex-shrink-0">
+          {% if item.actor_avatar_url %}
+          <img src="{{ item.actor_avatar_url }}" alt="" class="h-12 w-12 rounded-full object-cover ring-2 ring-white" />
+          {% else %}
+          <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-600">
+            <iconify-icon icon="solar:bell-bold-duotone" class="text-2xl"></iconify-icon>
+          </div>
+          {% endif %}
+          <div class="min-w-0">
+            <div class="flex flex-wrap items-center gap-2">
+              <h2 class="text-sm font-bold text-slate-900">{{ item.title }}</h2>
+              {% if not item.is_read %}
+              <span class="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-700">Unread</span>
+              {% endif %}
+            </div>
+            <p class="mt-1 text-xs text-slate-400">{{ item.created_label }}</p>
+            {% if item.actor_name %}
+            <p class="mt-1 truncate text-xs font-medium text-slate-500">{{ item.actor_name }}</p>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="min-w-0 flex-1">
+          {% if item.body %}
+          <p class="text-sm leading-relaxed text-slate-600">{{ item.body }}</p>
+          {% else %}
+          <p class="text-sm text-slate-400">Open this notification to view the related activity.</p>
+          {% endif %}
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2 md:flex-col md:items-end">
+          <a href="{{ item.open_url }}"
+             class="rounded-xl bg-primary-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-700">
+            Open
+          </a>
+          {% if not item.is_read %}
+          <form method="POST" action="{{ url_for('notifications.mark_read', notification_id=item.id) }}">
+            <button type="submit" class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-primary-300 hover:text-primary-700">
+              Mark read
+            </button>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="card p-12 text-center">
+    <div class="mb-3 text-5xl">
+      <iconify-icon icon="solar:bell-off-bold-duotone"></iconify-icon>
+    </div>
+    <h2 class="text-lg font-bold text-slate-900">No notifications yet</h2>
+    <p class="mt-1 text-sm text-slate-500">New activity from messages, posts, courses, and library updates will appear here.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

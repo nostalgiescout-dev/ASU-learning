@@ -1,0 +1,30 @@
+# Virtual environment
+.venv/
+.env
+
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# IDE / Editor files
+.vscode/
+.idea/
+*.swp
+venv_broken_backup/
+.claude
+.env
+gmail_token.json
+gmail_credentials.json
+*.db
+.venv/
+__pycache__/
+*.pyc
+local-certs/
+static/uploads/

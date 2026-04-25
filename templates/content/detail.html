@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% block title %}{{ content.title }}{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 py-8">
+
+  <!-- Back button -->
+  <a href="javascript:history.back()"
+     class="inline-flex items-center gap-2 mb-6 text-sm font-semibold text-slate-500 hover:text-violet-600 transition">
+    <iconify-icon icon="solar:arrow-left-bold" class="text-lg"></iconify-icon>
+    {{ _('Back') }}
+  </a>
+
+  <div class="rounded-3xl overflow-hidden shadow-xl" style="background:#fff; border:1px solid #e9d5ff;">
+
+    {% if content.type in ['video', 'reel'] %}
+
+    <!-- Video Player -->
+    <div class="relative w-full overflow-hidden" style="background:#0a0a0f;">
+      {% if content.type == 'reel' %}
+      <!-- Reel: portrait aspect ratio -->
+      <div style="aspect-ratio:9/16; max-height:80vh; margin:0 auto; max-width:430px;">
+        <video controls playsinline loop
+               class="w-full h-full object-cover block"
+               style="background:#000;">
+          <source src="{{ content.media_url }}" type="video/mp4" />
+        </video>
+      </div>
+      {% else %}
+      <!-- Video: landscape aspect ratio -->
+      <div style="aspect-ratio:16/9;">
+        <video controls playsinline
+               class="w-full h-full object-cover block"
+               style="background:#000;">
+          <source src="{{ content.media_url }}" type="video/mp4" />
+        </video>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Info -->
+    <div class="p-6">
+      <div class="flex items-start justify-between gap-3 mb-3">
+        <div>
+          <span class="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold mb-2"
+                style="background:#ede9fe; color:#7c3aed;">
+            <iconify-icon icon="{{ 'solar:clapperboard-play-bold-duotone' if content.type == 'reel' else 'solar:video-frame-play-horizontal-bold-duotone' }}"></iconify-icon>
+            {{ content.type|title }}
+          </span>
+          <h1 class="text-xl font-extrabold text-slate-900">{{ content.title }}</h1>
+        </div>
+      </div>
+
+      {% if content.description %}
+      <p class="text-sm leading-relaxed text-slate-600 mb-5">{{ content.description }}</p>
+      {% endif %}
+
+      <div class="flex flex-wrap gap-3 pt-4" style="border-top:1px solid #f3f0ff;">
+        {% if content.type == 'reel' %}
+        <a href="{{ url_for('content.reels') }}"
+           class="inline-flex items-center gap-2 rounded-2xl px-5 py-2.5 text-sm font-semibold transition hover:opacity-90"
+           style="background:linear-gradient(90deg,#7c3aed,#a855f7); color:#fff;">
+          <iconify-icon icon="solar:clapperboard-play-bold" class="text-base"></iconify-icon>
+          {{ _('View All Reels') }}
+        </a>
+        {% else %}
+        <a href="{{ url_for('content.videos') }}"
+           class="inline-flex items-center gap-2 rounded-2xl px-5 py-2.5 text-sm font-semibold transition hover:opacity-90"
+           style="background:linear-gradient(90deg,#7c3aed,#a855f7); color:#fff;">
+          <iconify-icon icon="solar:video-library-bold" class="text-base"></iconify-icon>
+          {{ _('View All Videos') }}
+        </a>
+        {% endif %}
+      </div>
+    </div>
+
+    {% elif content.type == 'book' %}
+
+    <!-- Book -->
+    <div class="p-8 text-center" style="background:linear-gradient(135deg,#faf5ff,#f3f0ff);">
+      <div class="mx-auto mb-5 flex h-24 w-24 items-center justify-center rounded-3xl shadow-lg"
+           style="background:linear-gradient(135deg,#7c3aed,#a855f7);">
+        <iconify-icon icon="solar:book-2-bold-duotone" class="text-5xl text-white"></iconify-icon>
+      </div>
+      <h1 class="text-2xl font-extrabold text-slate-900 mb-2">{{ content.title }}</h1>
+      {% if content.description %}
+      <p class="text-sm leading-relaxed text-slate-600 mb-6 max-w-md mx-auto">{{ content.description }}</p>
+      {% endif %}
+      <a href="{{ url_for('content.download_content', content_type=content.type, content_id=content.id) }}"
+         class="inline-flex items-center gap-2 rounded-2xl px-6 py-3 text-sm font-bold transition hover:opacity-90"
+         style="background:linear-gradient(90deg,#7c3aed,#a855f7); color:#fff; box-shadow:0 4px 14px rgba(124,58,237,0.35);">
+        <iconify-icon icon="solar:download-bold" class="text-lg"></iconify-icon>
+        {{ _('Download') }}
+      </a>
+    </div>
+
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}

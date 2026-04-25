@@ -1,0 +1,363 @@
+{% extends "base.html" %}
+{% block title %}{{ profile_user['full_name'] or profile_user['username'] }}{% endblock %}
+
+{% block content %}
+{% set pu = profile_user %}
+{% set prog_deg = ((pu['level_points'] % 1000) / 1000 * 360)|round|int %}
+{% set prog_pct = ((pu['level_points'] % 1000) / 10)|round|int %}
+
+<div class="max-w-3xl mx-auto px-4 py-6">
+
+  <div class="card overflow-hidden mb-5 animate-slide-up">
+    <div class="h-28 bg-gradient-to-r from-blue-600 via-blue-700 to-blue-900 relative">
+      <div class="absolute inset-0 opacity-10"
+           style="background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.1) 0,rgba(255,255,255,.1) 1px,transparent 0,transparent 50%);background-size:20px 20px;"></div>
+    </div>
+    <div class="px-6 pb-6">
+      <div class="flex items-end justify-between -mt-10 mb-4">
+        <div class="relative">
+          <img src="{{ pu['avatar_url'] }}" alt="{{ pu['username'] }}"
+               class="w-20 h-20 rounded-2xl object-cover ring-4 ring-white shadow-lg" />
+          <span class="absolute -bottom-1 -end-1 w-5 h-5 bg-green-500 rounded-full border-2 border-white"></span>
+        </div>
+        <div class="flex gap-2 mb-2">
+          {% if current_user['id'] == pu['id'] %}
+          <a href="{{ url_for('profile.edit') }}"
+             class="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-100 text-slate-700 text-sm font-semibold hover:bg-slate-200 transition">
+            <iconify-icon icon="solar:pen-bold"></iconify-icon>
+            Edit
+          </a>
+          {% else %}
+          <a href="{{ url_for('messages.inbox') }}"
+             class="flex items-center gap-2 px-4 py-2 rounded-xl xp-badge text-sm font-semibold hover:opacity-90 transition">
+            <iconify-icon icon="solar:chat-round-bold"></iconify-icon>
+            Message
+          </a>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <h1 class="font-display font-extrabold text-2xl text-slate-900">{{ pu['full_name'] or pu['username'] }}</h1>
+        <div class="flex flex-wrap items-center gap-3 mt-1 text-sm text-slate-500">
+          <span>@{{ pu['username'] }}</span>
+          {% if pu['scout_unit'] %}
+          <span>{{ pu['scout_unit'] }}</span>
+          {% endif %}
+          <span>{{ {'scout':'Scout','instructor':'Instructor','admin':'Admin'}.get(pu['role'],'Scout') }}</span>
+        </div>
+        {% if pu['bio'] %}
+        <p class="mt-3 text-sm text-slate-600 leading-relaxed">{{ pu['bio'] }}</p>
+        {% endif %}
+      </div>
+
+
+      <div class="grid grid-cols-4 gap-3">
+        <div class="bg-blue-50 rounded-xl p-3 text-center">
+          <div class="font-extrabold text-xl text-blue-700">{{ pu['level_rank'] }}</div>
+          <div class="text-xs text-blue-500">Level</div>
+        </div>
+        <div class="bg-orange-50 rounded-xl p-3 text-center">
+          <div class="font-extrabold text-xl text-orange-600">{{ pu['streak_days'] }}</div>
+          <div class="text-xs text-orange-400">Streak</div>
+        </div>
+        <div class="bg-purple-50 rounded-xl p-3 text-center">
+          <div class="font-extrabold text-xl text-purple-600">{{ pu['total_reels_watched'] }}</div>
+          <div class="text-xs text-purple-400">Reels</div>
+        </div>
+        <div class="bg-amber-50 rounded-xl p-3 text-center">
+          <div class="font-extrabold text-xl text-amber-600">{{ badges|length }}</div>
+          <div class="text-xs text-amber-400">Badges</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% if false and can_publish_posts %}
+  <div id="creator-studio" class="card p-5 mb-5">
+    <div class="mb-4 flex items-center justify-between gap-3">
+      <div>
+        <h2 class="font-display font-bold text-slate-900">Creator Studio</h2>
+        <p class="mt-1 text-sm text-slate-500">
+          {{ 'Admins can publish text, video, reel, and announcement posts from this profile.' if has_admin_like_access else 'Instructors can publish text, video, and reel posts from this profile.' }}
+        </p>
+      </div>
+      <div class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+        {{ 'Full admin feed tools' if has_admin_like_access else 'Instructor publishing' }}
+      </div>
+    </div>
+
+    <form method="POST" action="{{ url_for('dashboard.create_feed_post') }}" enctype="multipart/form-data" class="space-y-4">
+      <input type="hidden" name="return_to" value="profile" />
+
+      <div class="grid gap-4 md:grid-cols-2">
+        <div>
+          <label class="mb-1 block text-sm font-semibold text-slate-700">Post Type</label>
+          <select id="profile-post-type" name="post_type" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-400">
+            <option value="text">Text Post</option>
+            <option value="video">Video Post</option>
+            <option value="reel">Reel Post</option>
+          </select>
+        </div>
+
+        <div id="profile-category-field" class="hidden">
+          <label class="mb-1 block text-sm font-semibold text-slate-700">Category</label>
+          <select name="category" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-400">
+            {% for value, label in [('general','General'),('knot-tying','Knots'),('first-aid','First Aid'),('navigation','Navigation'),('camping','Camping'),('leadership','Leadership')] %}
+            <option value="{{ value }}">{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label class="mb-1 block text-sm font-semibold text-slate-700">Title</label>
+        <input type="text" name="title" placeholder="Give your post a title"
+               class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-400" />
+      </div>
+
+      <div>
+        <label class="mb-1 block text-sm font-semibold text-slate-700">Message</label>
+        <textarea name="body" rows="4" placeholder="Share an update with the community..."
+                  class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-400"></textarea>
+      </div>
+
+      <div id="profile-media-fields" class="hidden grid gap-4 md:grid-cols-2">
+        <div>
+          <label id="profile-media-url-label" class="mb-1 block text-sm font-semibold text-slate-700">Video URL</label>
+          <input id="profile-media-url" type="url" name="media_url" placeholder="https://example.com/video.mp4"
+                 class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary-400" />
+        </div>
+        <div>
+          <label id="profile-media-file-label" class="mb-1 block text-sm font-semibold text-slate-700">Upload video</label>
+          <input id="profile-media-file" type="file" name="media_file" accept=".mp4,.mov,.webm,.m4v,video/mp4,video/quicktime,video/webm"
+                 class="block w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-700 file:me-3 file:rounded-lg file:border-0 file:bg-primary-50 file:px-3 file:py-2 file:font-semibold file:text-primary-700 hover:file:bg-primary-100" />
+        </div>
+      </div>
+
+      <div class="grid gap-3 sm:grid-cols-4">
+        <div class="flex items-center gap-2 rounded-xl bg-slate-100 px-4 py-3 text-sm font-semibold text-slate-700">
+          <iconify-icon icon="solar:text-bold-duotone" class="text-lg"></iconify-icon>
+          Text
+        </div>
+        <div class="flex items-center gap-2 rounded-xl bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-700">
+          <iconify-icon icon="solar:video-frame-play-horizontal-bold-duotone" class="text-lg"></iconify-icon>
+          Video
+        </div>
+        <div class="flex items-center gap-2 rounded-xl bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-700">
+          <iconify-icon icon="solar:clapperboard-play-bold-duotone" class="text-lg"></iconify-icon>
+          Reel
+        </div>
+        <button type="submit" class="rounded-xl bg-primary-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-primary-700">
+          Publish
+        </button>
+      </div>
+    </form>
+  </div>
+  {% endif %}
+
+  {% if badges %}
+  <div class="card p-5 mb-5">
+    <h2 class="font-display font-bold text-slate-900 mb-4">Badges ({{ badges|length }})</h2>
+    <div class="flex flex-wrap gap-3">
+      {% for b in badges %}
+      <div class="flex flex-col items-center gap-1">
+        <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl border-2"
+             style="background-color:{{ b['color'] }}20; border-color:{{ b['color'] }}50">
+          {{ b['icon'] }}
+        </div>
+        <span class="text-xs font-medium text-slate-600 text-center max-w-[60px] leading-tight">{{ b['name'] }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if enrollments %}
+  <div class="card p-5 mb-5">
+    <h2 class="font-display font-bold text-slate-900 mb-4">Learning Progress</h2>
+    <div class="space-y-3">
+      {% for e in enrollments %}
+      <a href="{{ url_for('courses.detail', course_id=e['course_id']) }}"
+         class="flex items-center gap-4 p-3 rounded-xl hover:bg-slate-50 transition">
+        <div class="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center text-xl flex-shrink-0">
+          {{ {'knot-tying':'🪢','first-aid':'🩺','navigation':'🧭','leadership':'🌟','camping':'⛺'}.get(e['category'],'📖') }}
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-semibold text-slate-800 truncate">{{ e['title'] }}</p>
+          <div class="flex items-center gap-2 mt-1">
+            <div class="flex-1 progress-bar">
+              <div class="progress-fill" style="width:{{ e['progress_pct']|round|int }}%"></div>
+            </div>
+            <span class="text-xs text-slate-400">{{ e['progress_pct']|round|int }}%</span>
+            {% if e['is_completed'] %}
+            <span class="text-xs bg-green-100 text-green-700 font-semibold px-2 py-0.5 rounded-full">Done</span>
+            {% endif %}
+          </div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if recent_videos %}
+  <div class="card p-5 mb-5">
+    <h2 class="font-display font-bold text-slate-900 mb-4">Uploaded Reels</h2>
+    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+      {% for v in recent_videos %}
+      <a href="{{ url_for('dashboard.video_detail', video_id=v['id']) }}" class="group block">
+        <div class="aspect-video bg-slate-200 rounded-xl overflow-hidden relative">
+          {% if v['thumbnail_url'] %}
+          <img src="{{ v['thumbnail_url'] }}" alt="{{ v['title'] }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+          {% else %}
+          <div class="w-full h-full flex items-center justify-center text-3xl">
+            <iconify-icon icon="solar:video-frame-play-horizontal-bold-duotone"></iconify-icon>
+          </div>
+          {% endif %}
+        </div>
+        <p class="text-xs font-medium text-slate-700 mt-1.5 line-clamp-1">{{ v['title'] }}</p>
+        <p class="text-xs text-slate-400">{{ v['view_count'] }} views</p>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <div id="profile-posts" class="card p-5 mb-5">
+    <div class="mb-4 flex items-center justify-between gap-3">
+      <div>
+        <h2 class="font-display font-bold text-slate-900">Published Posts</h2>
+        <p class="mt-1 text-sm text-slate-500">Recent text, video, and reel posts from this profile.</p>
+      </div>
+      <div class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">{{ user_posts|length }} recent</div>
+    </div>
+
+    {% if user_posts %}
+    <div class="space-y-4">
+      {% for post in user_posts %}
+      <article class="overflow-hidden rounded-3xl border border-slate-100 bg-slate-50">
+        <div class="border-b border-slate-100 bg-white px-5 py-4">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <h3 class="text-lg font-bold text-slate-900">{{ post['title'] }}</h3>
+              <div class="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                <span class="rounded-full bg-slate-100 px-3 py-1 font-semibold text-slate-600">{{ {'text':'Text','video':'Video','reel':'Reel'}.get(post['post_type'], post['post_type']|title) }}</span>
+                {% if post['category'] and post['post_type'] in ['video', 'reel'] %}
+                <span class="rounded-full bg-blue-50 px-3 py-1 font-semibold text-blue-700">{{ post['category']|replace('-', ' ')|title }}</span>
+                {% endif %}
+                <span>{{ post['created_at'][:16] }}</span>
+              </div>
+            </div>
+            <a href="{{ url_for('dashboard.feed') }}#post-{{ post['id'] }}"
+               class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 transition hover:border-primary hover:text-primary">
+              Open in feed
+            </a>
+          </div>
+        </div>
+
+        <div class="p-5">
+          {% if post['body'] %}
+          <p class="mb-4 whitespace-pre-line text-sm leading-relaxed text-slate-600">{{ post['body'] }}</p>
+          {% endif %}
+
+          {% if post['post_type'] in ['video', 'reel'] and post['media_url'] %}
+          <div class="mb-4 overflow-hidden rounded-2xl bg-slate-950">
+            <video controls preload="metadata" class="h-full max-h-[460px] w-full">
+              <source src="{{ post['media_url'] }}" type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+          </div>
+          {% endif %}
+
+          <div class="flex flex-wrap items-center gap-3 text-xs font-semibold text-slate-500">
+            <span class="rounded-full bg-white px-3 py-1">{{ post['like_count'] }} likes</span>
+            <span class="rounded-full bg-white px-3 py-1">{{ post['comment_count'] }} comments</span>
+            <span class="rounded-full bg-white px-3 py-1">{{ post['share_count'] }} shares</span>
+          </div>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}
+      <div class="rounded-3xl border border-dashed border-slate-200 bg-slate-50 px-5 py-10 text-center">
+      <div class="text-sm font-semibold text-slate-700">{% if can_publish_posts %}You have not published anything yet.{% else %}No public posts yet.{% endif %}</div>
+      <p class="mt-1 text-sm text-slate-400">{% if can_publish_posts %}Start with a text, video, or reel update for the community.{% else %}Come back later to see new profile posts.{% endif %}</p>
+    </div>
+    {% endif %}
+  </div>
+
+  {% if recent_books %}
+  <div class="card p-5">
+    <h2 class="font-display font-bold text-slate-900 mb-4">Uploaded Books</h2>
+    <div class="grid gap-3 sm:grid-cols-2">
+      {% for book in recent_books %}
+      <div class="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+        <div class="flex items-start gap-3">
+          <div class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-blue-100 text-xl text-blue-700">
+            <iconify-icon icon="solar:document-text-bold-duotone"></iconify-icon>
+          </div>
+          <div class="min-w-0 flex-1">
+            <p class="truncate text-sm font-semibold text-slate-800">{{ book['title'] }}</p>
+            <div class="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+              {% if book['category_name'] %}
+              <span class="rounded-full bg-white px-2.5 py-1 font-medium text-slate-600">{{ book['category_name'] }}</span>
+              {% endif %}
+              <span class="uppercase">{{ book['language'] }}</span>
+            </div>
+            {% if book['description'] %}
+            <p class="mt-2 line-clamp-2 text-xs leading-relaxed text-slate-500">{{ book['description'] }}</p>
+            {% endif %}
+          </div>
+        </div>
+        <div class="mt-4 flex gap-2">
+          <a href="{{ url_for('library.view_book', book_id=book['id']) }}" target="_blank" rel="noopener"
+             class="inline-flex items-center gap-1.5 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-white transition hover:bg-blue-700">
+            <iconify-icon icon="solar:eye-bold"></iconify-icon>
+            Read
+          </a>
+          <a href="{{ url_for('library.download_book', book_id=book['id']) }}"
+             class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-primary hover:text-primary">
+            <iconify-icon icon="solar:download-minimalistic-bold"></iconify-icon>
+            Download
+          </a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const profilePostType = document.getElementById('profile-post-type');
+const profileCategoryField = document.getElementById('profile-category-field');
+const profileMediaFields = document.getElementById('profile-media-fields');
+const profileMediaUrlLabel = document.getElementById('profile-media-url-label');
+const profileMediaFileLabel = document.getElementById('profile-media-file-label');
+const profileMediaUrl = document.getElementById('profile-media-url');
+const profileMediaFile = document.getElementById('profile-media-file');
+
+function updateProfileComposerFields() {
+  if (!profilePostType) return;
+  const isVideoType = ['video', 'reel'].includes(profilePostType.value);
+  if (profileCategoryField) profileCategoryField.classList.toggle('hidden', !isVideoType);
+  if (profileMediaFields) profileMediaFields.classList.toggle('hidden', !isVideoType);
+
+  if (isVideoType && profileMediaUrlLabel && profileMediaFileLabel && profileMediaUrl && profileMediaFile) {
+    profileMediaUrlLabel.textContent = 'Video URL';
+    profileMediaFileLabel.textContent = 'Upload video';
+    profileMediaUrl.placeholder = 'https://example.com/video.mp4';
+    profileMediaFile.accept = '.mp4,.mov,.webm,.m4v,video/mp4,video/quicktime,video/webm';
+  }
+}
+
+if (profilePostType) {
+  profilePostType.addEventListener('change', updateProfileComposerFields);
+  updateProfileComposerFields();
+}
+</script>
+{% endblock %}

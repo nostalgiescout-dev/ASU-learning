@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block title %}Contact Us{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-xl px-4 py-12">
+
+  <div class="mb-8 text-center">
+    <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl"
+         style="background:linear-gradient(135deg,#7c3aed,#a855f7);">
+      <iconify-icon icon="solar:chat-round-like-bold-duotone" class="text-3xl text-white"></iconify-icon>
+    </div>
+    <h1 class="font-display text-2xl font-extrabold text-slate-900">Contact Us</h1>
+    <p class="mt-1 text-sm text-slate-500">
+      Fill in the form below. We'll send you a verification link before your message reaches us.
+    </p>
+  </div>
+
+  <div class="card p-6">
+    <form method="POST" action="{{ url_for('contact.form') }}" class="space-y-4" novalidate>
+
+      <div>
+        <label class="mb-1 block text-sm font-semibold text-slate-700">Your Name</label>
+        <input type="text" name="name"
+               value="{{ form_data.get('name','') }}"
+               placeholder="Ali Hassan"
+               required
+               class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-800
+                      focus:outline-none focus:ring-2 focus:ring-violet-400" />
+      </div>
+
+      <div>
+        <label class="mb-1 block text-sm font-semibold text-slate-700">Email Address</label>
+        <input type="email" name="email"
+               value="{{ form_data.get('email','') }}"
+               placeholder="ali@example.com"
+               required
+               class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-800
+                      focus:outline-none focus:ring-2 focus:ring-violet-400" />
+      </div>
+
+      <div>
+        <label class="mb-1 block text-sm font-semibold text-slate-700">Message</label>
+        <textarea name="message" rows="5"
+                  placeholder="Write your message here..."
+                  required
+                  class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800
+                         focus:outline-none focus:ring-2 focus:ring-violet-400 resize-none">{{ form_data.get('message','') }}</textarea>
+      </div>
+
+      <button type="submit"
+              class="w-full rounded-xl px-5 py-3 text-sm font-bold text-white transition active:scale-95"
+              style="background:linear-gradient(90deg,#7c3aed,#a855f7);">
+        <iconify-icon icon="solar:letter-bold" class="me-1"></iconify-icon>
+        Send Message
+      </button>
+
+    </form>
+  </div>
+
+</div>
+{% endblock %}

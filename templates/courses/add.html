@@ -1,0 +1,96 @@
+﻿{% extends "base.html" %}
+{% block title %}{{ 'Edit Course' if is_edit else 'Add Course' }}{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 py-6 lg:px-8">
+  <div class="mb-6 flex items-center justify-between gap-4">
+    <div>
+      <h1 class="font-display font-800 text-2xl text-slate-900">{{ 'Edit Course' if is_edit else 'Add New Course' }}</h1>
+      <p class="text-slate-500 text-sm mt-1">
+        {{ 'Update your course details, visibility, and rewards.' if is_edit else 'Admins and instructors can publish new scout learning tracks from here.' }}
+      </p>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      {% if has_admin_like_access %}
+      <a href="{{ url_for('courses.manage_categories') }}" class="px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-600 text-sm font-semibold hover:border-primary-300 transition">Manage Categories</a>
+      {% endif %}
+      <a href="{{ url_for('courses.detail', course_id=course['id']) if is_edit else url_for('courses.index') }}" class="px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-600 text-sm font-semibold hover:border-primary-300 transition">{{ 'Back to course' if is_edit else 'Back to courses' }}</a>
+    </div>
+  </div>
+
+  <div class="card p-6">
+    <form method="POST" action="{{ url_for('courses.edit', course_id=course['id']) if is_edit else url_for('courses.add') }}" class="space-y-5">
+      <div>
+        <label class="block text-sm font-semibold text-slate-700 mb-1.5">Course Title</label>
+        <input type="text" name="title" required value="{{ form_data.get('title', '') }}" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-400 text-sm" placeholder="First Aid in the Field" />
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold text-slate-700 mb-1.5">Description</label>
+        <textarea name="description" rows="5" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-400 text-sm" placeholder="Describe what learners will master in this course...">{{ form_data.get('description', '') }}</textarea>
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold text-slate-700 mb-1.5">Thumbnail URL</label>
+        <input type="url" name="thumbnail_url" value="{{ form_data.get('thumbnail_url', '') }}" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-400 text-sm" placeholder="https://example.com/course-cover.jpg" />
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-1.5">Category</label>
+          <select name="category" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-400 text-sm">
+            {% for category in categories %}
+            <option value="{{ category.slug }}" {{ 'selected' if form_data.get('category', 'general') == category.slug else '' }}>{{ category.emoji or '📚' }} {{ category.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-1.5">Difficulty</label>
+          <select name="difficulty" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-400 text-sm">
+            {% for difficulty in difficulties %}
+            <option value="{{ difficulty }}" {{ 'selected' if form_data.get('difficulty', 'beginner') == difficulty else '' }}>{{ difficulty|title }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold text-slate-700 mb-1.5">Certificate Language</label>
+        <select name="language" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-400 text-sm">
+          <option value="en" {{ 'selected' if form_data.get('language', 'en') == 'en' else '' }}>English</option>
+          <option value="fr" {{ 'selected' if form_data.get('language') == 'fr' else '' }}>French</option>
+          <option value="ar" {{ 'selected' if form_data.get('language') == 'ar' else '' }}>Arabic</option>
+        </select>
+        <p class="mt-2 text-xs text-slate-500">Certificates use this language and show only the course name.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-1.5">XP Reward</label>
+          <input type="number" name="xp_reward" min="0" value="{{ form_data.get('xp_reward', 500) }}" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-400 text-sm" />
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-1.5">Duration (minutes)</label>
+          <input type="number" name="duration_mins" min="0" value="{{ form_data.get('duration_mins', 60) }}" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-400 text-sm" />
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <label class="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+          <input type="checkbox" name="is_published" {{ 'checked' if form_data.get('is_published') else '' }} class="rounded accent-primary-600" />
+          Publish immediately
+        </label>
+        <label class="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+          <input type="checkbox" name="is_featured" {{ 'checked' if form_data.get('is_featured') else '' }} class="rounded accent-primary-600" />
+          Mark as featured
+        </label>
+      </div>
+
+      <div class="flex justify-end gap-3 pt-2">
+        <a href="{{ url_for('courses.detail', course_id=course['id']) if is_edit else url_for('courses.index') }}" class="px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-600 text-sm font-semibold hover:border-primary-300 transition">Cancel</a>
+        <button type="submit" class="px-5 py-2.5 rounded-xl bg-primary-600 text-white text-sm font-semibold hover:bg-primary-700 transition">{{ 'Save changes' if is_edit else 'Create course' }}</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

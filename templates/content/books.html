@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mx-auto py-8">
+  <h2 class="text-2xl font-bold mb-6">{{ _('Books') }}</h2>
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    {% for c in contents %}
+    <div class="bg-white rounded shadow p-4 flex flex-col items-center">
+      <img src="/static/images/icons/pdf-icon.png" class="w-16 h-16 mb-2" alt="PDF">
+      <h3 class="font-semibold">{{ c.title }}</h3>
+      <p class="text-sm text-gray-600">{{ c.description }}</p>
+      <a href="{{ url_for('content.download_content', content_type=c.type, content_id=c.id) }}" class="bg-green-600 text-white px-3 py-1 rounded mt-2">{{ _('Download') }}</a>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

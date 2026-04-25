@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Conversation{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 py-6 flex flex-col" style="height: calc(100vh - 80px)">
+
+  <div class="card p-4 mb-4 flex items-center gap-3 flex-shrink-0">
+    <a href="{{ url_for('messages.inbox') }}"
+       class="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition">
+      <iconify-icon icon="solar:arrow-left-bold" class="flip-rtl text-slate-600"></iconify-icon>
+    </a>
+    {% if other_user %}
+    <img src="{{ other_user.avatar_url }}" class="w-10 h-10 rounded-full object-cover" alt="" />
+    <div>
+      <p class="font-semibold text-slate-800 text-sm">{{ other_user_display_name }}</p>
+      <p class="text-xs text-slate-500">{{ other_user_role_label }}</p>
+    </div>
+    {% else %}
+    <div class="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-xl">
+      <iconify-icon icon="solar:user-bold"></iconify-icon>
+    </div>
+    <p class="font-semibold text-slate-800">Conversation</p>
+    {% endif %}
+  </div>
+
+  <div id="msg-window" class="flex-1 overflow-y-auto space-y-3 mb-4 px-1">
+    {% for msg in messages %}
+      {% set is_mine = msg['sender_id'] == current_user['id'] %}
+      <div class="flex items-end gap-2 {{ 'justify-end' if is_mine else '' }}">
+        {% if not is_mine %}
+        <img src="{{ msg['uavatar'] }}" class="w-7 h-7 rounded-full object-cover flex-shrink-0" alt="" />
+        {% endif %}
+        <div class="max-w-[75%] break-words px-4 py-2.5 rounded-2xl text-sm leading-relaxed
+                     {{ 'bg-primary-600 text-white rounded-ee-sm' if is_mine else 'bg-white border border-slate-100 shadow-sm text-slate-700 rounded-ss-sm' }}">
+          {{ msg['body'] }}
+          <div class="text-[10px] mt-1 {{ 'text-primary-200' if is_mine else 'text-slate-400' }}">
+            {{ msg['created_label'] }}
+            {% if is_mine %} - {{ 'read' if msg['is_read'] else 'sent' }}{% endif %}
+          </div>
+        </div>
+        {% if is_mine %}
+        <img src="{{ current_user['avatar_url'] }}" class="w-7 h-7 rounded-full object-cover flex-shrink-0" alt="" />
+        {% endif %}
+      </div>
+    {% else %}
+    <div class="flex items-center justify-center py-12 text-slate-400 text-sm">
+      Start the conversation.
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="card p-3 flex-shrink-0">
+    <form method="POST" action="{{ url_for('messages.send') }}" class="flex gap-3">
+      <input type="hidden" name="thread_id" value="{{ thread['id'] }}" />
+      <input type="hidden" name="receiver_id"
+             value="{{ thread['participant_b'] if thread['participant_a'] == current_user['id'] else thread['participant_a'] }}" />
+      <img src="{{ current_user['avatar_url'] }}" class="w-9 h-9 rounded-full object-cover flex-shrink-0" alt="" />
+      <input type="text" name="body" required
+             class="flex-1 px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm
+                    focus:outline-none focus:ring-2 focus:ring-primary-400"
+             placeholder="Type a message..." autocomplete="off" />
+      <button type="submit"
+              class="w-10 h-10 rounded-xl xp-badge flex items-center justify-center flex-shrink-0 hover:opacity-90 transition">
+        <iconify-icon icon="solar:plain-bold" class="text-lg flip-rtl"></iconify-icon>
+      </button>
+    </form>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const w = document.getElementById('msg-window');
+if (w) w.scrollTop = w.scrollHeight;
+</script>
+{% endblock %}

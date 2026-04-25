@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Edit Book' if is_edit else _('Add Book') }} - {{ _('Only Scouts Academy') }}{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 py-6 lg:px-8">
+  <div class="mb-6 flex items-center justify-between gap-4">
+    <div>
+      <h1 class="font-display font-800 text-2xl text-slate-900">{{ 'Edit Book' if is_edit else _('Add Book') }}</h1>
+      <p class="mt-1 text-sm text-slate-500">
+        {{ 'Update the file details or replace the uploaded document.' if is_edit else 'Upload a PDF, Word, or PowerPoint file and place it in the right category for your library readers.' }}
+      </p>
+    </div>
+    <a href="{{ url_for('library.index') }}" class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-primary-300">
+      {{ _('Cancel') }}
+    </a>
+  </div>
+
+  <div class="card p-6">
+    <form method="POST" enctype="multipart/form-data" class="space-y-5">
+      <div>
+        <label class="mb-1.5 block text-sm font-semibold text-slate-700">{{ _('Title') }}</label>
+        <input name="title" required value="{{ form_data.get('title', '') }}" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400" placeholder="{{ _('Title') }}" />
+      </div>
+
+      <div>
+        <label class="mb-1.5 block text-sm font-semibold text-slate-700">{{ _('Description') }}</label>
+        <textarea name="description" rows="5" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400" placeholder="{{ _('Description') }}">{{ form_data.get('description', '') }}</textarea>
+      </div>
+
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div>
+          <label class="mb-1.5 block text-sm font-semibold text-slate-700">Category</label>
+          <select name="category_id" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400" required>
+            <option value="">Select category</option>
+            {% for category in categories %}
+              <option value="{{ category.id }}" {{ 'selected' if form_data.get('category_id')|string == category.id|string else '' }}>{{ category.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="mb-1.5 block text-sm font-semibold text-slate-700">{{ _('Language') }}</label>
+          <select name="language" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400">
+            {% for code in ['en', 'fr', 'ar', 'es'] %}
+              <option value="{{ code }}" {{ 'selected' if form_data.get('language', 'en') == code else '' }}>{{ code.upper() }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label class="mb-1.5 block text-sm font-semibold text-slate-700">{{ 'Replace File' if is_edit else _('Select file') }}</label>
+        <input type="file" name="file" accept=".pdf,.doc,.docx,.ppt,.pptx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation" {{ 'required' if not is_edit else '' }} class="block w-full text-sm text-slate-600 file:me-4 file:rounded-xl file:border-0 file:bg-primary file:px-4 file:py-2.5 file:font-semibold file:text-white hover:file:bg-blue-700" />
+        <p class="mt-2 text-xs text-slate-400">
+          {% if is_edit %}
+            Leave this empty to keep the current file. Current file: {{ book.file_path.split('/')[-1] }}
+          {% else %}
+            Accepted formats: PDF, DOC, DOCX, PPT, PPTX.
+          {% endif %}
+        </p>
+      </div>
+
+      <div>
+        <label class="mb-1.5 block text-sm font-semibold text-slate-700">{{ 'Replace Cover Image' if is_edit else 'Book Cover Image' }}</label>
+        <input type="file" name="cover_image" accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp" class="block w-full text-sm text-slate-600 file:me-4 file:rounded-xl file:border-0 file:bg-slate-800 file:px-4 file:py-2.5 file:font-semibold file:text-white hover:file:bg-slate-900" />
+        <p class="mt-2 text-xs text-slate-400">
+          Upload a book cover image so the library shows the book visually like a bookshelf.
+          {% if is_edit and book and book.cover_image_path %}
+            Current cover: {{ book.cover_image_path.split('/')[-1] }}
+          {% endif %}
+        </p>
+        {% if is_edit and book and book.cover_image_path %}
+          <div class="mt-4 inline-flex rounded-2xl border border-slate-200 bg-slate-50 p-3">
+            <img src="{{ url_for('static', filename=book.cover_image_path) }}" alt="{{ book.title }} cover" class="h-40 w-auto rounded-xl object-cover shadow-sm" />
+          </div>
+        {% endif %}
+      </div>
+
+      <div class="flex justify-end gap-3 pt-2">
+        <a href="{{ url_for('library.index') }}" class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:border-primary-300">{{ _('Cancel') }}</a>
+        <button type="submit" class="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700">
+          {{ 'Save changes' if is_edit else _('Upload book') }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,282 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Messages') }}{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-6">
+
+  <!-- Header -->
+  <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+    <div>
+      <h1 class="font-display font-extrabold text-2xl text-slate-900">{{ _('Messages') }}</h1>
+      <p class="text-sm text-slate-500">{{ _('Chat with friends and instructors.') }}</p>
+    </div>
+    <a href="{{ url_for('ai.chat_ui') }}"
+       class="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-sm font-semibold transition hover:opacity-90"
+       style="background:linear-gradient(90deg,#7c3aed,#a855f7); color:#fff; box-shadow:0 4px 14px rgba(124,58,237,0.3);">
+      <iconify-icon icon="solar:robot-bold-duotone" class="text-lg"></iconify-icon>
+      {{ _('Kachaf AI') }}
+    </a>
+  </div>
+
+  <div class="grid gap-5 xl:grid-cols-[1fr_340px]">
+
+    <!-- LEFT: Chat Area -->
+    <section class="min-w-0 space-y-4">
+
+      <!-- Quick Start -->
+      <div class="rounded-3xl p-5" style="background:#fff; border:1px solid #e9d5ff; box-shadow:0 4px 20px rgba(124,58,237,0.07);">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+          <div>
+            <h2 class="font-bold text-slate-800">{{ _('Quick Start') }}</h2>
+            <p class="text-xs text-slate-500">{{ _('Message an instructor instantly.') }}</p>
+          </div>
+          <span class="rounded-full px-3 py-1 text-xs font-bold" style="background:#ede9fe; color:#7c3aed;">{{ instructors|length }} {{ _('available') }}</span>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          {% for inst in instructors %}
+          <form method="POST" action="{{ url_for('messages.send') }}" class="inline">
+            <input type="hidden" name="receiver_id" value="{{ inst.id }}" />
+            <input type="hidden" name="body" value="Hello! I'd like to ask you something." />
+            <button type="submit"
+                    class="flex max-w-full min-w-0 items-center gap-2 rounded-2xl border px-4 py-2 text-sm font-semibold transition hover:border-violet-300 hover:bg-violet-50"
+                    style="border-color:#e9d5ff; color:#374151; background:#faf5ff;">
+              <img src="{{ inst.avatar_url }}" class="w-7 h-7 rounded-full object-cover" alt="" />
+              <span class="min-w-0 flex-1 truncate">{{ inst.full_name or inst.username }}</span>
+            </button>
+          </form>
+          {% else %}
+          <p class="text-sm text-slate-400">{{ _('No instructors available.') }}</p>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Chat Window -->
+      <div class="rounded-3xl overflow-hidden flex flex-col" style="min-height:640px; background:#fff; border:1px solid #e9d5ff; box-shadow:0 4px 20px rgba(124,58,237,0.07);">
+        {% if active_thread %}
+
+        <!-- Chat Header -->
+        <div class="flex items-center gap-3 px-5 py-4" style="border-bottom:1px solid #f3f0ff; background:linear-gradient(90deg,#faf5ff,#fff);">
+          {% if active_thread['other_user'] and active_thread['other_user']['avatar_url'] %}
+          <img src="{{ active_thread['other_user']['avatar_url'] }}" class="w-11 h-11 rounded-full object-cover ring-2" style="ring-color:#c4b5fd;" alt="" />
+          {% else %}
+          <div class="w-11 h-11 rounded-2xl flex items-center justify-center" style="background:#ede9fe;">
+            <iconify-icon icon="solar:user-bold" style="color:#7c3aed;"></iconify-icon>
+          </div>
+          {% endif %}
+          <div>
+            <p class="font-bold text-slate-900">{{ active_thread['other_user_display_name'] }}</p>
+            <p class="text-xs" style="color:#a78bfa;">{{ active_thread['other_user_role_label'] }}</p>
+          </div>
+          <div class="ms-auto flex h-8 w-8 items-center justify-center rounded-full" style="background:#ede9fe;">
+            <iconify-icon icon="solar:chat-dots-bold-duotone" style="color:#7c3aed;"></iconify-icon>
+          </div>
+        </div>
+
+        <!-- Messages -->
+        <div id="msg-window" class="flex-1 overflow-y-auto px-5 py-5 space-y-4" style="background:#faf5ff;">
+          {% for msg in active_thread['messages'] %}
+            {% set is_mine = msg['sender_id'] == current_user['id'] %}
+            <div class="flex items-end gap-2 {{ 'justify-end' if is_mine else '' }}">
+              {% if not is_mine %}
+              <img src="{{ msg['uavatar'] }}" class="w-8 h-8 rounded-full object-cover flex-shrink-0" alt="" />
+              {% endif %}
+              <div class="max-w-[72%] break-words px-4 py-3 rounded-2xl text-sm leading-relaxed"
+                   style="{{ 'background:linear-gradient(135deg,#7c3aed,#a855f7); color:#fff; border-bottom-right-radius:4px;' if is_mine else 'background:#fff; border:1px solid #e9d5ff; color:#374151; border-bottom-left-radius:4px; box-shadow:0 2px 8px rgba(124,58,237,0.08);' }}">
+                {{ msg['body'] }}
+                <div class="mt-1 text-[10px] {{ 'text-violet-200' if is_mine else 'text-slate-400' }}">
+                  {{ msg['created_label'] }}{% if is_mine %} · {{ 'read' if msg['is_read'] else 'sent' }}{% endif %}
+                </div>
+              </div>
+              {% if is_mine %}
+              <img src="{{ current_user['avatar_url'] }}" class="w-8 h-8 rounded-full object-cover flex-shrink-0" alt="" />
+              {% endif %}
+            </div>
+          {% else %}
+          <div class="flex h-full items-center justify-center py-20 text-sm text-slate-400">
+            {{ _('Start the conversation.') }}
+          </div>
+          {% endfor %}
+        </div>
+
+        <!-- Input -->
+        <div class="px-4 py-4" style="border-top:1px solid #f3f0ff; background:#fff;">
+          <form method="POST" action="{{ url_for('messages.send') }}" class="flex gap-3 items-center">
+            <input type="hidden" name="thread_id" value="{{ active_thread['thread']['id'] }}" />
+            <input type="hidden" name="receiver_id"
+                   value="{{ active_thread['thread']['participant_b'] if active_thread['thread']['participant_a'] == current_user['id'] else active_thread['thread']['participant_a'] }}" />
+            <img src="{{ current_user['avatar_url'] }}" class="w-9 h-9 rounded-full object-cover flex-shrink-0" alt="" />
+            <input type="text" name="body" required
+                   class="flex-1 rounded-2xl px-4 py-3 text-sm focus:outline-none transition"
+                   style="border:1.5px solid #e9d5ff; background:#faf5ff; color:#1e1b4b;"
+                   onfocus="this.style.borderColor='#7c3aed'; this.style.boxShadow='0 0 0 4px rgba(124,58,237,0.1)'"
+                   onblur="this.style.borderColor='#e9d5ff'; this.style.boxShadow='none'"
+                   placeholder="{{ _('Type a message...') }}" autocomplete="off" />
+            <button type="submit"
+                    class="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 transition hover:opacity-90"
+                    style="background:linear-gradient(135deg,#7c3aed,#a855f7); box-shadow:0 4px 14px rgba(124,58,237,0.35);">
+              <iconify-icon icon="solar:plain-bold" class="text-lg text-white flip-rtl"></iconify-icon>
+            </button>
+          </form>
+        </div>
+
+        {% else %}
+        <!-- Empty State -->
+        <div class="flex flex-1 items-center justify-center p-8">
+          <div class="text-center">
+            <div class="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-3xl shadow-lg"
+                 style="background:linear-gradient(135deg,#7c3aed,#a855f7); box-shadow:0 8px 30px rgba(124,58,237,0.3);">
+              <iconify-icon icon="solar:chat-round-bold-duotone" class="text-4xl text-white"></iconify-icon>
+            </div>
+            <h2 class="font-extrabold text-2xl mb-2" style="color:#1e1b4b;">{{ _('Select a chat') }}</h2>
+            <p class="text-sm leading-7 text-slate-500 max-w-xs">
+              {{ _('Pick a friend from the right sidebar, add someone new, or start with an instructor.') }}
+            </p>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </section>
+
+    <!-- RIGHT: Friends Sidebar -->
+    <aside class="space-y-4">
+      <div class="rounded-3xl p-5" style="background:#fff; border:1px solid #e9d5ff; box-shadow:0 4px 20px rgba(124,58,237,0.07);">
+
+        <div class="flex items-center justify-between gap-3 mb-4">
+          <div>
+            <h2 class="font-bold text-slate-800">{{ _('Friends') }}</h2>
+            <p class="text-xs text-slate-500">{{ _('Search, chat, or add new people.') }}</p>
+          </div>
+          <a href="{{ url_for('dashboard.feed') }}"
+             class="rounded-xl px-3 py-1.5 text-xs font-bold transition hover:bg-violet-100"
+             style="background:#ede9fe; color:#7c3aed;">
+            {{ _('Suggestions') }}
+          </a>
+        </div>
+
+        <!-- Search -->
+        <div class="relative mb-4">
+          <iconify-icon icon="solar:magnifer-linear" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></iconify-icon>
+          <input id="friend-search" type="text"
+                 class="w-full rounded-2xl py-3 pl-10 pr-4 text-sm focus:outline-none transition"
+                 style="border:1.5px solid #e9d5ff; background:#faf5ff; color:#1e1b4b;"
+                 onfocus="this.style.borderColor='#7c3aed'"
+                 onblur="this.style.borderColor='#e9d5ff'"
+                 placeholder="{{ _('Search...') }}" />
+        </div>
+
+        <!-- Friends List -->
+        <div class="space-y-2 mb-4">
+          {% for friend in friends %}
+          <a href="{{ url_for('messages.direct_chat', user_id=friend.id) }}"
+             data-friend-card
+             data-search-text="{{ (friend.display_name ~ ' ' ~ friend.display_role ~ ' ' ~ (friend.scout_unit or ''))|lower }}"
+             class="flex items-center gap-3 rounded-2xl px-3 py-3 transition hover:bg-violet-50"
+             style="border:1px solid #f3f0ff;">
+            <img src="{{ friend.avatar_url }}" alt="" class="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+            <div class="min-w-0 flex-1">
+              <p class="truncate text-sm font-semibold text-slate-800">{{ friend.display_name }}</p>
+              <p class="truncate text-xs text-slate-500">{{ friend.display_role }}{% if friend.scout_unit %} · {{ friend.scout_unit }}{% endif %}</p>
+            </div>
+            <span class="rounded-full px-2.5 py-1 text-[11px] font-bold"
+                  style="background:#ede9fe; color:#7c3aed;">
+              {% if active_thread and active_thread['other_user'] and active_thread['other_user']['id'] == friend.id %}{{ _('Open') }}{% else %}{{ _('Chat') }}{% endif %}
+            </span>
+          </a>
+          {% endfor %}
+        </div>
+
+        {% if not friends %}
+        <div class="rounded-2xl border border-dashed px-4 py-5 text-center text-sm text-slate-400 mb-4" style="border-color:#c4b5fd;">
+          {{ _('No friends yet. Add someone below.') }}
+        </div>
+        {% endif %}
+
+        <!-- Add Friends -->
+        <div style="border-top:1px solid #f3f0ff; padding-top:16px;">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-bold text-slate-800">{{ _('Add Friends') }}</h3>
+            <span class="text-xs font-bold" style="color:#7c3aed;">{{ friend_suggestions|length }} {{ _('suggestions') }}</span>
+          </div>
+
+          <div class="space-y-2">
+            {% for user in friend_suggestions %}
+            <div data-friend-card
+                 data-search-text="{{ (user.display_name ~ ' ' ~ user.display_role ~ ' ' ~ (user.scout_unit or ''))|lower }}"
+                 class="flex items-center gap-3 rounded-2xl px-3 py-3"
+                 style="border:1px solid #f3f0ff;">
+              <img src="{{ user.avatar_url }}" alt="" class="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+              <div class="min-w-0 flex-1">
+                <p class="truncate text-sm font-semibold text-slate-800">{{ user.display_name }}</p>
+                <p class="truncate text-xs text-slate-500">{{ user.display_role }}{% if user.scout_unit %} · {{ user.scout_unit }}{% endif %}</p>
+              </div>
+
+              {% if user.friend_status == 'accepted' %}
+              <a href="{{ url_for('messages.direct_chat', user_id=user.id) }}"
+                 class="rounded-xl px-3 py-1.5 text-xs font-bold transition hover:opacity-90"
+                 style="background:#d1fae5; color:#059669;">{{ _('Chat') }}</a>
+              {% elif user.incoming_request %}
+              <button type="button"
+                      data-request-url="{{ url_for('dashboard.send_friend_request', user_id=user.id) }}"
+                      class="friend-request-btn rounded-xl px-3 py-1.5 text-xs font-bold text-white transition hover:opacity-90"
+                      style="background:linear-gradient(90deg,#7c3aed,#a855f7);">{{ _('Accept') }}</button>
+              {% elif user.friend_status == 'pending' %}
+              <span class="rounded-xl px-3 py-1.5 text-xs font-bold" style="background:#fef3c7; color:#d97706;">{{ _('Pending') }}</span>
+              {% else %}
+              <button type="button"
+                      data-request-url="{{ url_for('dashboard.send_friend_request', user_id=user.id) }}"
+                      class="friend-request-btn rounded-xl px-3 py-1.5 text-xs font-bold text-white transition hover:opacity-90"
+                      style="background:linear-gradient(90deg,#7c3aed,#a855f7);">{{ _('Add') }}</button>
+              {% endif %}
+            </div>
+            {% else %}
+            <div class="rounded-2xl border border-dashed px-4 py-5 text-center text-sm text-slate-400" style="border-color:#c4b5fd;">
+              {{ _('No suggestions right now.') }}
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const msgWindow = document.getElementById('msg-window');
+if (msgWindow) msgWindow.scrollTop = msgWindow.scrollHeight;
+
+const friendSearchInput = document.getElementById('friend-search');
+if (friendSearchInput) {
+  friendSearchInput.addEventListener('input', () => {
+    const term = friendSearchInput.value.trim().toLowerCase();
+    document.querySelectorAll('[data-friend-card]').forEach((card) => {
+      const haystack = card.dataset.searchText || '';
+      card.classList.toggle('hidden', !!term && !haystack.includes(term));
+    });
+  });
+}
+
+document.querySelectorAll('.friend-request-btn').forEach((button) => {
+  button.addEventListener('click', async () => {
+    const response = await fetch(button.dataset.requestUrl, { method: 'POST' });
+    const data = await response.json();
+    if (!response.ok) {
+      showToast(data.error || 'Unable to update friend request right now.', 'danger');
+      return;
+    }
+    if ((data.status || '') === 'accepted') {
+      button.textContent = 'Friends';
+      button.style.background = '#d1fae5';
+      button.style.color = '#059669';
+    } else {
+      button.textContent = data.label || 'Pending';
+      button.style.background = '#fef3c7';
+      button.style.color = '#d97706';
+    }
+    button.disabled = true;
+    showToast(data.message || 'Friend request updated.', 'success');
+  });
+});
+</script>
+{% endblock %}
