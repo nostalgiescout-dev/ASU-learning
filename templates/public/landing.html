@@ -1,11 +1,21 @@
 {% extends "auth_base.html" %}
-{% block title %}Only Scouts Academy | أكاديمية كشافة فقط | Académie Scouts | Academia Scouts{% endblock %}
-{% block meta_description %}Only Scouts Academy — أكاديمية كشافة فقط — Académie scouts uniquement — Academia scouts solamente. Micro-learning, digital badges, and leadership tools for scouts worldwide. Available in Arabic, French, English, and Spanish.{% endblock %}
-{% block og_title %}Only Scouts Academy | أكاديمية كشافة فقط{% endblock %}
+
+{% block title %}
+{% if current_locale == 'ar' %}أكاديمية كشافة فقط — تعلم مهارات الكشافة أونلاين{% elif current_locale == 'fr' %}Académie scouts uniquement — Apprenez les compétences scoutes en ligne{% elif current_locale == 'es' %}Academia scouts solamente — Aprende habilidades scouts en línea{% else %}Only Scouts Academy — Learn Scouting Skills Online{% endif %}
+{% endblock %}
+
+{% block meta_description %}
+{% if current_locale == 'ar' %}أكاديمية كشافة فقط — منصة تعليمية رقمية للكشافة. تعلم مهارات الكشافة، الإسعافات الأولية، القيادة، التخييم، عقد الكشافة. شارات رقمية ودورات تفاعلية. انضم الآن مجاناً.{% elif current_locale == 'fr' %}Académie scouts uniquement — plateforme d'apprentissage numérique pour scouts. Micro-learning, badges numériques, leadership et compétences scoutes en ligne.{% elif current_locale == 'es' %}Academia scouts solamente — plataforma de aprendizaje digital para scouts. Micro-aprendizaje, insignias digitales, liderazgo y habilidades scouts en línea.{% else %}Only Scouts Academy — micro-learning, digital badges, and leadership tools for scouts worldwide. Join free. Available in Arabic, French, English, and Spanish.{% endif %}
+{% endblock %}
+
+{% block og_title %}
+{% if current_locale == 'ar' %}أكاديمية كشافة فقط{% elif current_locale == 'fr' %}Académie scouts uniquement{% elif current_locale == 'es' %}Academia scouts solamente{% else %}Only Scouts Academy{% endif %}
+{% endblock %}
+
 {% block meta_robots %}index, follow{% endblock %}
 
 {% block head_extra %}
-<meta name="keywords" content="Only Scouts Academy, أكاديمية كشافة فقط, Académie scouts uniquement, Academia scouts solamente, scouts learning, كشافة, scouts academy, scout platform, scout education, تعلم الكشافة, formation scouts, aprendizaje scouts" />
+<meta name="keywords" content="{% if current_locale == 'ar' %}أكاديمية كشافة فقط, كشافة, تعلم الكشافة, مهارات الكشافة, أكاديمية الكشافة, تدريب الكشافة, دورات كشافة, كشافة أونلاين, منصة تعليمية كشافة, شارات رقمية, قيادة كشافة, كشافة عربية, عقد الكشافة, التخييم, الإسعافات الأولية, برنامج الكشافة, Only Scouts Academy{% elif current_locale == 'fr' %}Académie scouts uniquement, scouts, formation scouts, badges numériques, compétences scoutes, Only Scouts Academy{% elif current_locale == 'es' %}Academia scouts solamente, scouts, aprendizaje scouts, insignias digitales, habilidades scouts, Only Scouts Academy{% else %}Only Scouts Academy, scouts academy, scout learning, digital badges, scouting skills, أكاديمية كشافة فقط{% endif %}" />
 <meta property="og:locale" content="en_US" />
 <meta property="og:locale:alternate" content="ar_AR" />
 <meta property="og:locale:alternate" content="fr_FR" />
@@ -23,7 +33,7 @@
     "Kechafa Academy"
   ],
   "url": "{{ request.url_root }}",
-  "description": "A digital learning platform for scouts with micro-learning, digital badges, leadership management, and multilingual access in Arabic, English, French, and Spanish.",
+  "description": "{% if current_locale == 'ar' %}أكاديمية كشافة فقط — منصة تعليمية رقمية للكشافة. تعلم مهارات الكشافة، الإسعافات الأولية، القيادة، والتخييم. شارات رقمية ودورات تفاعلية.{% else %}A digital learning platform for scouts with micro-learning, digital badges, leadership management, and multilingual access in Arabic, English, French, and Spanish.{% endif %}",
   "logo": "{{ url_for('static', filename='assets/logo.jpg', _external=True) }}",
   "image": "{{ url_for('static', filename='assets/logo.jpg', _external=True) }}",
   "foundingDate": "2025",
@@ -106,10 +116,10 @@
 
   <!-- Multilingual academy names — indexed by search engines -->
   <div style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;" aria-hidden="true">
-    <span lang="en">Only Scouts Academy</span>
-    <span lang="ar">أكاديمية كشافة فقط</span>
-    <span lang="fr">Académie scouts uniquement</span>
-    <span lang="es">Academia scouts solamente</span>
+    <span lang="ar">أكاديمية كشافة فقط — تعلم الكشافة — مهارات الكشافة — كشافة أونلاين — دورات كشافة</span>
+    <span lang="en">Only Scouts Academy — scout learning — scouting skills online</span>
+    <span lang="fr">Académie scouts uniquement — formation scouts en ligne</span>
+    <span lang="es">Academia scouts solamente — habilidades scouts en línea</span>
   </div>
 
   <!-- Hero Section -->
