@@ -229,6 +229,16 @@
         {{ _('AI Coach') }}
         <span class="ms-auto text-xs bg-amber-100 text-amber-700 font-semibold px-2 py-0.5 rounded-full">Beta</span>
       </a>
+      <a href="{{ url_for('content.reels') }}"
+         class="sidebar-link {{ 'active' if request.endpoint == 'content.reels' }}">
+        <iconify-icon icon="solar:play-circle-bold-duotone" class="text-xl text-pink-500"></iconify-icon>
+        {{ _('Micro-learning') }}
+      </a>
+      <a href="{{ url_for('profile.view', username=u['username']) }}#badges"
+         class="sidebar-link">
+        <iconify-icon icon="solar:medal-ribbons-star-bold-duotone" class="text-xl text-yellow-500"></iconify-icon>
+        {{ _('Badge Journey') }}
+      </a>
 
       <p class="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2 px-2 mt-4">{{ _('Community') }}</p>
       <a href="{{ url_for('profile.view', username=u['username']) }}"
@@ -244,13 +254,38 @@
     </nav>
 
 
-    <div class="p-4 border-t border-slate-100">
+    <div class="p-4 border-t border-slate-100 flex flex-col gap-1">
+      {# ── Language Switcher ── #}
+      <div class="relative" id="lang-menu-wrap">
+        <button onclick="document.getElementById('lang-dropdown').classList.toggle('hidden')"
+                class="flex w-full items-center gap-3 px-3 py-2.5 text-slate-500 hover:text-primary-600 text-sm rounded-lg hover:bg-slate-50 transition">
+          <span class="text-lg">🌐</span>
+          {{ _('Language') }} — <span class="font-semibold">{{ {'en':'🇬🇧','ar':'🇲🇦','fr':'🇫🇷','es':'🇪🇸'}.get(current_locale,'🌐') }}</span>
+        </button>
+        <div id="lang-dropdown" class="hidden absolute bottom-full mb-1 start-0 w-44 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden z-50">
+          {% for code, flag, label in [('en','🇬🇧','English'),('ar','🇲🇦','العربية'),('fr','🇫🇷','Français'),('es','🇪🇸','Español')] %}
+          <a href="{{ request.path }}?lang={{ code }}"
+             class="flex items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50 transition {{ 'font-semibold text-primary-600' if current_locale == code else 'text-slate-700' }}">
+            <span>{{ flag }}</span> {{ label }}
+          </a>
+          {% endfor %}
+        </div>
+      </div>
       <a href="{{ url_for('auth.logout') }}"
          class="flex items-center gap-3 px-3 py-2.5 text-slate-500 hover:text-red-600 text-sm rounded-lg hover:bg-red-50 transition">
         <iconify-icon icon="solar:logout-2-bold-duotone" class="text-xl flip-rtl"></iconify-icon> {{ _('Sign Out') }}
       </a>
     </div>
   </aside>
+  <script>
+    document.addEventListener('click', function(e) {
+      const wrap = document.getElementById('lang-menu-wrap');
+      if (wrap && !wrap.contains(e.target)) {
+        const dd = document.getElementById('lang-dropdown');
+        if (dd) dd.classList.add('hidden');
+      }
+    });
+  </script>
 
   {# ── MAIN CONTENT ── #}
   <main class="flex-1 overflow-x-hidden lg:ms-[280px] pb-[calc(var(--bottom-nav-h)+env(safe-area-inset-bottom))] lg:pb-6" style="min-height:calc(100vh - var(--bottom-nav-h));">

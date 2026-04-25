@@ -119,7 +119,7 @@ def create_app(config_name: str | None = None, config_overrides: dict | None = N
                 "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
                 "font-src https://fonts.gstatic.com; "
                 "img-src 'self' data: https:; "
-                "connect-src 'self';"
+                "connect-src 'self' https://api.iconify.design;"
             )
         return response
 

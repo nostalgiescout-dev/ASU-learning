@@ -48,6 +48,33 @@
 </head>
 <body>
 <div id="toast-container"></div>
+
+{# ── Language Switcher ── #}
+<div class="fixed top-4 end-4 z-50">
+  <div class="relative" id="lang-menu-wrap">
+    <button onclick="document.getElementById('lang-dropdown').classList.toggle('hidden')"
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-slate-200 shadow-sm text-sm font-medium text-slate-700 hover:bg-slate-50 transition">
+      <span class="text-base">🌐</span>
+      <span>{{ {'en':'🇬🇧','ar':'🇲🇦','fr':'🇫🇷','es':'🇪🇸'}.get(current_locale,'🌐') }}</span>
+    </button>
+    <div id="lang-dropdown" class="hidden absolute end-0 mt-1 w-32 bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden z-50">
+      {% for code, flag, label in [('en','🇬🇧','English'),('ar','🇲🇦','العربية'),('fr','🇫🇷','Français'),('es','🇪🇸','Español')] %}
+      <a href="{{ request.path }}?lang={{ code }}"
+         class="flex items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50 transition {{ 'font-semibold text-primary-600' if current_locale == code else 'text-slate-700' }}">
+        <span>{{ flag }}</span> {{ label }}
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+<script>
+  document.addEventListener('click', function(e) {
+    const wrap = document.getElementById('lang-menu-wrap');
+    if (wrap && !wrap.contains(e.target)) {
+      document.getElementById('lang-dropdown').classList.add('hidden');
+    }
+  });
+</script>
 {% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}
   <div id="flash-data" class="hidden">
