@@ -778,34 +778,6 @@
     {% endfor %}
   </div>
 
-  {% if active_filter == 'all' and reel_strip %}
-  <div class="card mb-6 overflow-hidden">
-    <div class="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-      <div class="flex items-center gap-2">
-        <iconify-icon icon="solar:clapperboard-play-bold-duotone" class="text-xl text-slate-700"></iconify-icon>
-        <h2 class="font-display text-lg font-700 text-slate-900">{{ _('Reels') }}</h2>
-      </div>
-      <a href="{{ url_for('dashboard.feed', filter='reel') }}" class="text-sm font-semibold text-primary-600 hover:underline">
-        {{ _('View all') }}
-      </a>
-    </div>
-    <div class="feed-reels-strip px-4 py-4">
-      <div class="feed-reels-grid">
-        {% for reel in reel_strip %}
-        <a href="{{ url_for('dashboard.feed', filter='reel', page=1) }}#reel-post-{{ reel.id }}" class="feed-reel-tile transition hover:-translate-y-0.5">
-          <video muted playsinline preload="metadata">
-            <source src="{{ reel.media_url }}" type="video/mp4" />
-          </video>
-          <div class="feed-reel-tile-info">
-            <div class="feed-reel-tile-title">{{ reel.title }}</div>
-            <div class="feed-reel-tile-meta">{{ reel.author_full_name or reel.author_username }}</div>
-          </div>
-        </a>
-        {% endfor %}
-      </div>
-    </div>
-  </div>
-  {% endif %}
 
   {% if active_filter == 'reel' %}
   <section class="reel-viewer-shell">

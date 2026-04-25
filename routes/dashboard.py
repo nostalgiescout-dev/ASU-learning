@@ -199,9 +199,11 @@ def feed():
     can_create_posts = _can_create_feed_posts(current_user)
     can_use_full_feed_features = _can_use_full_feed_features(current_user)
 
-    post_where = "WHERE fp.is_published=1 AND fp.post_type != 'image'"
+    post_where = "WHERE fp.is_published=1 AND fp.post_type NOT IN ('image')"
     post_params: list = []
-    if active_filter != "all":
+    if active_filter == "reel":
+        post_where += " AND fp.post_type='reel'"
+    elif active_filter != "all":
         post_where += " AND fp.post_type=?"
         post_params.append(active_filter)
 
