@@ -16,3 +16,21 @@ jobs:
       - run: pip install -r requirements.txt
       - run: pip install pytest pytest-cov
       - run: PYTHONPATH=. pytest tests --maxfail=1 --disable-warnings -q
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd /var/www/ASU-learning
+            git pull origin main
+            source .venv/bin/activate
+            pip install -r requirements.txt
+            systemctl restart kechafa
