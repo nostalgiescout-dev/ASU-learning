@@ -484,13 +484,14 @@ def create_feed_post():
 @login_required
 def delete_feed_post(post_id):
     author = _current_user()
-    if not _can_use_full_feed_features(author):
-        flash("Only admins can delete feed posts.", "danger")
-        return _feed_redirect()
-
-    post = fetchone("SELECT id, title, media_url FROM feed_posts WHERE id=?", (post_id,))
+    post = fetchone("SELECT id, title, media_url, author_id FROM feed_posts WHERE id=?", (post_id,))
     if not post:
         flash("Post not found.", "danger")
+        return _feed_redirect()
+
+    is_own_post = post["author_id"] == author["id"]
+    if not is_own_post and not _can_use_full_feed_features(author):
+        flash("You don't have permission to delete this post.", "danger")
         return _feed_redirect()
 
     execute("DELETE FROM post_likes WHERE post_id=?", (post_id,))
@@ -500,6 +501,11 @@ def delete_feed_post(post_id):
     _delete_local_feed_media(post.get("media_url"))
 
     flash(f"Post '{post.get('title') or 'Untitled post'}' deleted.", "success")
+    return_to = request.form.get("return_to")
+    if return_to == "profile":
+        username = fetchone("SELECT username FROM users WHERE id=?", (author["id"],))
+        if username:
+            return redirect(url_for("profile.view", username=username["username"]))
     return _feed_redirect()
 
 
