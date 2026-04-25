@@ -118,7 +118,7 @@ class NotificationService(BaseRepository):
             f"New message from {sender_name}",
             self._truncate(message_preview, 100),
             "chat",
-            target_url=url_for("messages.inbox", thread=thread_id),
+            target_url=f"/messages?thread={thread_id}",
             entity_type="thread",
             entity_id=thread_id,
             actor_id=sender.get("id"),
