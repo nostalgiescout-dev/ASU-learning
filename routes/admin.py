@@ -1,4 +1,5 @@
 """routes/admin.py"""
+import subprocess
 from pathlib import Path
 
 from flask import Blueprint, current_app, render_template, request, jsonify, redirect, url_for, flash, session
@@ -105,6 +106,23 @@ def _cleanup_user_records(user_id: int, replacement_user_id: int) -> list[str]:
         conn.execute("DELETE FROM users WHERE id=?", (user_id,))
 
     return [row["media_url"] for row in owned_feed_media if row.get("media_url")]
+
+
+@admin_bp.route("/deploy", methods=["POST"])
+@admin_required
+def deploy():
+    try:
+        pull = subprocess.run(
+            ["git", "pull", "origin", "main"],
+            cwd="/var/www/ASU-learning",
+            capture_output=True, text=True, timeout=60
+        )
+        subprocess.Popen(["systemctl", "restart", "kechafa"])
+        output = pull.stdout.strip() or pull.stderr.strip()
+        flash(f"✅ Deploy done: {output}", "success")
+    except Exception as e:
+        flash(f"❌ Deploy failed: {e}", "danger")
+    return redirect(url_for("admin.dashboard"))
 
 
 @admin_bp.route("/")
