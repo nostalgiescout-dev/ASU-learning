@@ -28,3 +28,4 @@ __pycache__/
 *.pyc
 local-certs/
 static/uploads/
+kechafa.db	
