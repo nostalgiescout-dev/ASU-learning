@@ -115,10 +115,11 @@ def create_app(config_name: str | None = None, config_overrides: dict | None = N
             response.headers["Content-Security-Policy"] = (
                 "default-src 'self'; "
                 "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com "
-                "https://code.iconify.design; "
+                "https://code.iconify.design https://www.youtube.com https://s.ytimg.com; "
                 "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
                 "font-src https://fonts.gstatic.com; "
                 "img-src 'self' data: https:; "
+                "frame-src https://www.youtube.com https://www.youtube-nocookie.com; "
                 "connect-src 'self' https://api.iconify.design;"
             )
         return response
