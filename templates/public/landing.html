@@ -1,26 +1,47 @@
 {% extends "auth_base.html" %}
-{% block title %}Only Scouts Academy — Learn Scouting Skills Online{% endblock %}
-{% block meta_description %}Only Scouts Academy — micro-learning, digital badges, and leadership tools for scouts worldwide. Join 7,500+ active scouts. Available in Arabic, French, English, and Spanish.{% endblock %}
-{% block og_title %}Only Scouts Academy — Learn Scouting Skills Online{% endblock %}
+{% block title %}Only Scouts Academy | أكاديمية كشافة فقط | Académie Scouts | Academia Scouts{% endblock %}
+{% block meta_description %}Only Scouts Academy — أكاديمية كشافة فقط — Académie scouts uniquement — Academia scouts solamente. Micro-learning, digital badges, and leadership tools for scouts worldwide. Available in Arabic, French, English, and Spanish.{% endblock %}
+{% block og_title %}Only Scouts Academy | أكاديمية كشافة فقط{% endblock %}
 {% block meta_robots %}index, follow{% endblock %}
 
 {% block head_extra %}
+<meta name="keywords" content="Only Scouts Academy, أكاديمية كشافة فقط, Académie scouts uniquement, Academia scouts solamente, scouts learning, كشافة, scouts academy, scout platform, scout education, تعلم الكشافة, formation scouts, aprendizaje scouts" />
+<meta property="og:locale" content="en_US" />
+<meta property="og:locale:alternate" content="ar_AR" />
+<meta property="og:locale:alternate" content="fr_FR" />
+<meta property="og:locale:alternate" content="es_ES" />
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "EducationalOrganization",
   "name": "Only Scouts Academy",
+  "alternateName": [
+    "أكاديمية كشافة فقط",
+    "Académie scouts uniquement",
+    "Academia scouts solamente",
+    "ASU Learning",
+    "Kechafa Academy"
+  ],
   "url": "{{ request.url_root }}",
-  "description": "A digital learning platform for scouts with micro-learning, digital badges, leadership management, and multilingual access.",
+  "description": "A digital learning platform for scouts with micro-learning, digital badges, leadership management, and multilingual access in Arabic, English, French, and Spanish.",
   "logo": "{{ url_for('static', filename='assets/logo.jpg', _external=True) }}",
+  "image": "{{ url_for('static', filename='assets/logo.jpg', _external=True) }}",
   "foundingDate": "2025",
   "knowsLanguage": ["ar", "en", "fr", "es"],
+  "inLanguage": ["ar", "en", "fr", "es"],
+  "availableLanguage": [
+    {"@type": "Language", "name": "Arabic", "alternateName": "ar"},
+    {"@type": "Language", "name": "English", "alternateName": "en"},
+    {"@type": "Language", "name": "French", "alternateName": "fr"},
+    {"@type": "Language", "name": "Spanish", "alternateName": "es"}
+  ],
   "offers": {
     "@type": "Offer",
     "price": "0",
     "priceCurrency": "USD",
     "availability": "https://schema.org/InStock"
-  }
+  },
+  "sameAs": []
 }
 </script>
 {% endblock %}
@@ -82,6 +103,14 @@
       </div>
     </div>
   </header>
+
+  <!-- Multilingual academy names — indexed by search engines -->
+  <div style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;" aria-hidden="true">
+    <span lang="en">Only Scouts Academy</span>
+    <span lang="ar">أكاديمية كشافة فقط</span>
+    <span lang="fr">Académie scouts uniquement</span>
+    <span lang="es">Academia scouts solamente</span>
+  </div>
 
   <!-- Hero Section -->
   <main id="home" class="mx-auto max-w-7xl px-6 py-16 lg:py-24">
