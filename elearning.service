@@ -1,0 +1,27 @@
+[Unit]
+Description=Gunicorn daemon for ASU-Learning Flask app
+After=network.target
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/ASU-Learning
+EnvironmentFile=/var/www/ASU-Learning/.env
+
+ExecStart=/var/www/ASU-Learning/venv/bin/gunicorn \
+    --workers 3 \
+    --bind 127.0.0.1:8000 \
+    --timeout 120 \
+    --access-logfile /var/log/ASU-Learning/access.log \
+    --error-logfile  /var/log/ASU-Learning/error.log \
+    app:application
+
+ExecReload=/bin/kill -s HUP $MAINPID
+KillMode=mixed
+TimeoutStopSec=5
+PrivateTmp=true
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
