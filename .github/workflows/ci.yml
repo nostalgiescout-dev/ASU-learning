@@ -53,8 +53,11 @@ jobs:
 
             # ── 3. Install Nginx config ───────────────────────────────────────
             cp "$APP_DIR/nginx.conf" /etc/nginx/sites-available/elearning
+            # Strip Windows CRLF line endings that break nginx parser
+            sed -i 's/\r//' /etc/nginx/sites-available/elearning
+            # Remove ALL stale site configs (including leftover junk files)
+            rm -f /etc/nginx/sites-enabled/*
             ln -sf /etc/nginx/sites-available/elearning /etc/nginx/sites-enabled/elearning
-            rm -f /etc/nginx/sites-enabled/default
             nginx -t
 
             # ── 4. Create venv if missing ─────────────────────────────────────
