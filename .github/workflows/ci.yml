@@ -1,4 +1,4 @@
-name: CI
+name: CI / CD
 
 on:
   push:
@@ -9,9 +9,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4.2.2
+
       - uses: actions/setup-python@v5.3.0
         with:
           python-version: "3.11"
+
       - run: python -m pip install --upgrade pip
       - run: pip install -r requirements.txt
       - run: pip install pytest pytest-cov
@@ -29,8 +31,10 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            cd /var/www/ASU-learning
+            set -e
+            cd /var/www/ASU-Learning
             git pull origin main
-            source .venv/bin/activate
-            pip install -r requirements.txt
-            systemctl restart kechafa
+            /var/www/ASU-Learning/venv/bin/pip install -r requirements.txt --quiet
+            systemctl restart elearning
+            systemctl reload nginx
+            echo "Deploy complete — $(date)"
