@@ -33,11 +33,17 @@ jobs:
           script: |
             set -e
             APP_DIR="/var/www/ASU-Learning"
+            DOMAIN="kachafafaqat.com"
 
-            # ── 0. Allow git to operate in this directory regardless of owner ──
+            # ── 0. Install system packages if missing ─────────────────────────
+            export DEBIAN_FRONTEND=noninteractive
+            apt-get update -qq
+            apt-get install -y -qq git python3 python3-venv python3-pip nginx certbot
+
+            # ── 1. Git safe directory ─────────────────────────────────────────
             git config --global --add safe.directory "$APP_DIR"
 
-            # ── 1. Clone on first deploy, pull on subsequent deploys ──────────
+            # ── 2. Clone on first deploy, pull on subsequent deploys ──────────
             if [ ! -d "$APP_DIR/.git" ]; then
               mkdir -p "$APP_DIR"
               git clone https://github.com/${{ github.repository }}.git "$APP_DIR"
@@ -46,41 +52,61 @@ jobs:
             fi
             cd "$APP_DIR"
 
-            # ── 2. Install systemd service file ───────────────────────────────
-            cp "$APP_DIR/elearning.service" /etc/systemd/system/elearning.service
-            systemctl daemon-reload
-            systemctl enable elearning
+            # ── 3. Verify .env exists (must be uploaded manually once) ────────
+            if [ ! -f "$APP_DIR/.env" ]; then
+              echo "ERROR: /var/www/ASU-Learning/.env not found."
+              echo "Upload it once with:"
+              echo "  scp .env root@$DOMAIN:/var/www/ASU-Learning/.env"
+              exit 1
+            fi
 
-            # ── 3. Install Nginx config ───────────────────────────────────────
-            cp "$APP_DIR/nginx.conf" /etc/nginx/sites-available/elearning
-            # Strip Windows CRLF line endings that break nginx parser
-            sed -i 's/\r//' /etc/nginx/sites-available/elearning
-            # Remove ALL stale site configs (including leftover junk files)
+            # ── 4. Get SSL certificate if not already issued ──────────────────
+            CERT="/etc/letsencrypt/live/$DOMAIN/fullchain.pem"
+            if [ ! -f "$CERT" ]; then
+              systemctl stop nginx 2>/dev/null || true
+              certbot certonly --standalone \
+                -d "$DOMAIN" -d "www.$DOMAIN" \
+                --non-interactive --agree-tos \
+                --email alawiahmwdhadrami@gmail.com
+            fi
+
+            # ── 5. Install systemd service file ───────────────────────────────
+            cp "$APP_DIR/elearning.service" /etc/systemd/system/elearning.service
+            sed -i 's/\r//' /etc/systemd/system/elearning.service
+            systemctl daemon-reload
+            systemctl enable ASU-Learning
+
+            # ── 6. Install Nginx config ───────────────────────────────────────
+            cp "$APP_DIR/nginx.conf" /etc/nginx/sites-available/ASU-Learning
+            sed -i 's/\r//' /etc/nginx/sites-available/ASU-Learning
             rm -f /etc/nginx/sites-enabled/*
-            ln -sf /etc/nginx/sites-available/elearning /etc/nginx/sites-enabled/elearning
+            ln -sf /etc/nginx/sites-available/ASU-Learning /etc/nginx/sites-enabled/ASU-Learning
             nginx -t
 
-            # ── 4. Create venv if missing ─────────────────────────────────────
+            # ── 7. Create venv and install dependencies ───────────────────────
             if [ ! -f "$APP_DIR/venv/bin/python" ]; then
               python3 -m venv "$APP_DIR/venv"
             fi
             "$APP_DIR/venv/bin/pip" install --upgrade pip --quiet
             "$APP_DIR/venv/bin/pip" install gunicorn --quiet
-            "$APP_DIR/venv/bin/pip" install -r requirements.txt --quiet
+            "$APP_DIR/venv/bin/pip" install -r "$APP_DIR/requirements.txt" --quiet
 
-            # ── 5. Fix ownership ──────────────────────────────────────────────
+            # ── 8. Fix ownership and log directory ────────────────────────────
             mkdir -p /var/log/ASU-Learning
             chown www-data:www-data /var/log/ASU-Learning
             chown -R www-data:www-data "$APP_DIR"
 
-            # ── 6. Restart Gunicorn ───────────────────────────────────────────
-            systemctl restart elearning
+            # ── 9. Start / restart Gunicorn ───────────────────────────────────
+            systemctl restart ASU-Learning
 
-            # ── 7. Start or reload Nginx ──────────────────────────────────────
+            # ── 10. Start or reload Nginx ─────────────────────────────────────
             if systemctl is-active --quiet nginx; then
               systemctl reload nginx
             else
               systemctl start nginx
             fi
 
-            echo "Deploy complete — $(date)"
+            echo "=========================================="
+            echo " Deploy complete — $(date)"
+            echo " Site: https://$DOMAIN"
+            echo "=========================================="
