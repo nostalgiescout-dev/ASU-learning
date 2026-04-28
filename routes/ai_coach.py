@@ -2,11 +2,13 @@
 
 from flask import Blueprint, jsonify, render_template, request, session
 
-from kechafa_app.core.security import login_required
+from kechafa_app.core.security import is_admin_like_user, login_required
+from kechafa_app.repositories.user_repository import UserRepository
 from kechafa_app.services.ai_service import AIService
 
 ai_bp = Blueprint("ai", __name__, url_prefix="/ai-coach")
 ai_service = AIService()
+_user_repo = UserRepository()
 
 
 def _parse_conversation_id(value) -> int | None:
@@ -34,13 +36,15 @@ def chat_ui():
     active_conversation_id = active_conversation["id"] if active_conversation else None
     history = ai_service.get_history(uid, active_conversation_id)
 
+    user_key = session.get("admin_openrouter_key", "")
     return render_template(
         "messages/ai_chat.html",
         history=history,
-        ai_status=ai_service.provider_status(),
+        ai_status=ai_service.provider_status(user_api_key=user_key),
         conversation_id=active_conversation_id,
         conversation_title=ai_service.get_display_title(uid, active_conversation_id),
         conversations=ai_service.list_conversations(uid),
+        has_admin_api_key=bool(user_key),
     )
 
 
@@ -54,7 +58,8 @@ def send_message():
         return jsonify({"error": "Empty message"}), 400
 
     conversation_id = _parse_conversation_id(payload.get("conversation_id"))
-    result = ai_service.reply(uid, user_input, conversation_id)
+    user_key = session.get("admin_openrouter_key", "")
+    result = ai_service.reply(uid, user_input, conversation_id, user_api_key=user_key)
     if not result["ok"]:
         return (
             jsonify(
@@ -118,6 +123,30 @@ def delete():
     return jsonify({"status": "deleted", "conversation_id": conversation_id})
 
 
+@ai_bp.route("/set-api-key", methods=["POST"])
+@login_required
+def set_api_key():
+    user = _user_repo.get_by_id(session["user_id"])
+    if not is_admin_like_user(user):
+        return jsonify({"error": "Forbidden"}), 403
+    payload = request.json or {}
+    api_key = (payload.get("api_key") or "").strip()
+    if api_key:
+        session["admin_openrouter_key"] = api_key
+    else:
+        session.pop("admin_openrouter_key", None)
+    session.modified = True
+    user_key = session.get("admin_openrouter_key", "")
+    status = ai_service.provider_status(user_api_key=user_key)
+    return jsonify({
+        "status": "saved",
+        "has_key": bool(user_key),
+        "provider_label": status["label"],
+        "is_live": status["is_live"],
+        "provider_reason": status["reason"],
+    })
+
+
 @ai_bp.route("/edit-message", methods=["POST"])
 @login_required
 def edit_message():
@@ -129,11 +158,13 @@ def edit_message():
     except (TypeError, ValueError):
         return jsonify({"error": "Invalid message index."}), 400
 
+    user_key = session.get("admin_openrouter_key", "")
     result = ai_service.edit_user_message(
         session["user_id"],
         conversation_id,
         message_index,
         payload.get("message", ""),
+        user_api_key=user_key,
     )
     if not result["ok"]:
         return jsonify({"error": result["reason"]}), 400

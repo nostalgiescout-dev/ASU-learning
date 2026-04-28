@@ -97,6 +97,7 @@ class AIService:
         conversation_id: int | None,
         message_index: int,
         new_text: str,
+        user_api_key: str = "",
     ) -> dict[str, Any]:
         conversation = self.get_conversation(user_id, conversation_id)
         if not conversation:
@@ -132,7 +133,7 @@ class AIService:
                 "reason": "Real AI is disabled in configuration.",
             }
 
-        if not self._openrouter_keys():
+        if not self._openrouter_keys(user_api_key):
             return {
                 "ok": False,
                 "conversation_id": conversation["id"],
@@ -141,7 +142,7 @@ class AIService:
             }
 
         user = self.base_repo.fetchone("SELECT * FROM users WHERE id=?", (user_id,)) or {}
-        result = self._openrouter_reply(user, history)
+        result = self._openrouter_reply(user, history, user_api_key)
         ai_reply = result["content"]
         if ai_reply is None:
             return {
@@ -165,17 +166,17 @@ class AIService:
             "reason": f"Using OpenRouter model {self.openrouter_model}.",
         }
 
-    def provider_status(self) -> dict[str, Any]:
+    def provider_status(self, user_api_key: str = "") -> dict[str, Any]:
         if not self.enable_real_ai:
             reason = "Real AI is disabled in configuration."
-        elif not self._openrouter_keys():
+        elif not self._openrouter_keys(user_api_key):
             reason = "No OpenRouter API key is configured."
         else:
             reason = f"Using OpenRouter model {self.openrouter_model}."
         return {
             "provider": "openrouter",
             "label": "OpenRouter AI",
-            "is_live": self.enable_real_ai and bool(self._openrouter_keys()),
+            "is_live": self.enable_real_ai and bool(self._openrouter_keys(user_api_key)),
             "reason": reason,
         }
 
@@ -184,7 +185,7 @@ class AIService:
         history = self._deserialize_history(conversation["history_json"]) if conversation else []
         return self._resolve_title(conversation, history)
 
-    def reply(self, user_id: int, user_input: str, conversation_id: int | None = None) -> dict[str, Any]:
+    def reply(self, user_id: int, user_input: str, conversation_id: int | None = None, user_api_key: str = "") -> dict[str, Any]:
         user = self.base_repo.fetchone("SELECT * FROM users WHERE id=?", (user_id,)) or {}
         conversation = self.get_conversation(user_id, conversation_id)
         history = self._deserialize_history(conversation["history_json"]) if conversation else []
@@ -205,10 +206,10 @@ class AIService:
         if not self.enable_real_ai:
             return self._error_result(active_conversation_id, history, "Real AI is disabled in configuration.")
 
-        if not self._openrouter_keys():
+        if not self._openrouter_keys(user_api_key):
             return self._error_result(active_conversation_id, history, "No OpenRouter API key is configured.")
 
-        result = self._openrouter_reply(user, history)
+        result = self._openrouter_reply(user, history, user_api_key)
         ai_reply = result["content"]
         if ai_reply is None:
             return self._error_result(active_conversation_id, history, result["error"] or "OpenRouter request failed.")
@@ -227,15 +228,19 @@ class AIService:
             "reason": f"Using OpenRouter model {self.openrouter_model}.",
         }
 
-    def _openrouter_keys(self) -> list[str]:
+    def _openrouter_keys(self, user_api_key: str = "") -> list[str]:
         keys = []
+        if user_api_key:
+            normalized = self._normalize_openrouter_key(user_api_key)
+            if normalized:
+                keys.append(normalized)
         for key in [self.openrouter_api_key, self.openrouter_fallback_api_key]:
             normalized = self._normalize_openrouter_key(key)
             if normalized and normalized not in keys:
                 keys.append(normalized)
         return keys
 
-    def _openrouter_reply(self, user: dict[str, Any], history: list[dict[str, Any]]) -> dict[str, str | None]:
+    def _openrouter_reply(self, user: dict[str, Any], history: list[dict[str, Any]], user_api_key: str = "") -> dict[str, str | None]:
         name = user.get("full_name") or user.get("username") or "Scout"
         messages = [
             {
@@ -254,7 +259,7 @@ class AIService:
         messages.extend(history[-10:])
 
         last_error = "OpenRouter request failed."
-        for api_key in self._openrouter_keys():
+        for api_key in self._openrouter_keys(user_api_key):
             try:
                 payload = json.dumps(
                     {
