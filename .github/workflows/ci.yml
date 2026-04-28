@@ -96,8 +96,12 @@ jobs:
             chown www-data:www-data /var/log/ASU-Learning
             chown -R www-data:www-data "$APP_DIR"
 
-            # ── 9. Start / restart Gunicorn ───────────────────────────────────
-            systemctl restart $SERVICE
+            # ── 9. Clear Python bytecode cache then hard restart Gunicorn ────
+            find "$APP_DIR" -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+            find "$APP_DIR" -name "*.pyc" -delete 2>/dev/null || true
+            systemctl stop $SERVICE 2>/dev/null || true
+            sleep 1
+            systemctl start $SERVICE
 
             # ── 10. Start or reload Nginx ─────────────────────────────────────
             if systemctl is-active --quiet nginx; then
