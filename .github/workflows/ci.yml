@@ -96,7 +96,16 @@ jobs:
             chown www-data:www-data /var/log/ASU-Learning
             chown -R www-data:www-data "$APP_DIR"
 
-            # ── 9. Clear Python bytecode cache then hard restart Gunicorn ────
+            # ── 9. Backup database before deploy ─────────────────────────────
+            BACKUP_DIR="/var/backups/elearning"
+            mkdir -p "$BACKUP_DIR"
+            if [ -f "$APP_DIR/kechafa.db" ]; then
+              cp "$APP_DIR/kechafa.db" "$BACKUP_DIR/kechafa_pre_deploy_$(date +%Y-%m-%d_%H-%M-%S).db"
+              find "$BACKUP_DIR" -name "kechafa_pre_deploy_*.db" -mtime +7 -delete
+              echo "[OK] Database backed up to $BACKUP_DIR"
+            fi
+
+            # ── 10. Clear Python bytecode cache then hard restart Gunicorn ───
             find "$APP_DIR" -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
             find "$APP_DIR" -name "*.pyc" -delete 2>/dev/null || true
             systemctl stop $SERVICE 2>/dev/null || true
