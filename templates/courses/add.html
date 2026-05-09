@@ -22,17 +22,17 @@
     <form method="POST" action="{{ url_for('courses.edit', course_id=course['id']) if is_edit else url_for('courses.add') }}" class="space-y-5">
       <div>
         <label class="block text-sm font-semibold text-slate-700 mb-1.5">Course Title</label>
-        <input type="text" name="title" required value="{{ form_data.get('title', '') }}" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-400 text-sm" placeholder="First Aid in the Field" />
+        <input type="text" name="title" required value="{{ form_data.get('title', '') }}" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-400 text-sm" placeholder="{{ _('First Aid in the Field') }}" />
       </div>
 
       <div>
         <label class="block text-sm font-semibold text-slate-700 mb-1.5">Description</label>
-        <textarea name="description" rows="5" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-400 text-sm" placeholder="Describe what learners will master in this course...">{{ form_data.get('description', '') }}</textarea>
+        <textarea name="description" rows="5" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-400 text-sm" placeholder="{{ _('Describe what learners will master in this course...') }}">{{ form_data.get('description', '') }}</textarea>
       </div>
 
       <div>
         <label class="block text-sm font-semibold text-slate-700 mb-1.5">Thumbnail URL</label>
-        <input type="url" name="thumbnail_url" value="{{ form_data.get('thumbnail_url', '') }}" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-400 text-sm" placeholder="https://example.com/course-cover.jpg" />
+        <input type="url" name="thumbnail_url" value="{{ form_data.get('thumbnail_url', '') }}" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-400 text-sm" placeholder="{{ _('https://example.com/course-cover.jpg') }}" />
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
