@@ -134,19 +134,22 @@
       position: absolute;
       top: 0;
       bottom: 0;
+      right: 0;
       width: min(88vw, 340px);
       background: #fff;
-      box-shadow: 8px 0 30px rgba(15,23,42,0.22);
+      box-shadow: -8px 0 30px rgba(15,23,42,0.22);
       padding-top: env(safe-area-inset-top);
       padding-bottom: env(safe-area-inset-bottom);
       overflow-y: auto;
-      transform: translateX(-102%);
+      transform: translateX(102%);
       transition: transform 220ms ease;
       will-change: transform;
     }
     html[dir="rtl"] .mobile-menu-drawer {
-      transform: translateX(102%);
-      box-shadow: -8px 0 30px rgba(15,23,42,0.22);
+      right: auto;
+      left: 0;
+      transform: translateX(-102%);
+      box-shadow: 8px 0 30px rgba(15,23,42,0.22);
     }
     .mobile-menu-overlay.is-open .mobile-menu-drawer { transform: translateX(0); }
   </style>
@@ -300,16 +303,8 @@
 <div id="mobile-menu-overlay" class="mobile-menu-overlay lg:hidden" hidden>
   <aside class="mobile-menu-drawer" role="dialog" aria-modal="true" aria-label="{{ _('Menu') }}">
     <div class="flex flex-col h-full">
-      <div class="p-4 border-b border-slate-100 flex items-center justify-between">
-        <a href="{{ url_for('dashboard.feed') }}" class="flex items-center gap-2" style="-webkit-tap-highlight-color:transparent;">
-          <div class="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl bg-white ring-1 ring-slate-200 shadow-sm">
-            <img src="{{ url_for('static', filename='assets/logo.jpg') }}" alt="Platform Logo" class="h-full w-full object-cover" loading="lazy" />
-          </div>
-          <div>
-            <div class="font-display font-extrabold text-slate-900 text-sm leading-tight">{{ _('Only Scouts Academy') }}</div>
-            <div class="text-[11px] text-slate-500 font-medium leading-tight">{{ _('Only Scouts Academy') }}</div>
-          </div>
-        </a>
+      <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+        <div class="font-display font-800 text-slate-900 text-base">{{ _('Menu') }}</div>
         <button type="button" id="mobile-menu-close"
                 class="h-10 w-10 inline-flex items-center justify-center rounded-xl bg-slate-100 text-slate-700"
                 aria-label="{{ _('Close') }}" style="-webkit-tap-highlight-color:transparent;">
@@ -317,78 +312,57 @@
         </button>
       </div>
 
-      {# User card (same as desktop sidebar) #}
       {% set u = current_user %}
-      <div class="p-4 border-b border-slate-100">
-        <div class="flex items-center gap-3">
-          <div class="relative flex-shrink-0">
-            <img src="{{ u['avatar_url'] }}" alt="avatar" class="w-11 h-11 rounded-full object-cover ring-2 ring-white" />
-            <span class="absolute -bottom-0.5 -end-0.5 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></span>
-          </div>
-          <div class="flex-1 min-w-0">
-            <div class="font-semibold text-slate-800 text-sm truncate">{{ u['full_name'] or u['username'] }}</div>
+      <nav class="p-6 flex-1">
+        <div class="flex flex-col items-center gap-2">
+          <a href="{{ url_for('courses.index') }}"
+             class="w-full max-w-[320px] rounded-full bg-primary-600 text-white text-sm font-semibold py-3 text-center shadow-sm hover:bg-primary-700 transition">
+            {{ _('Your Progress') }}
+          </a>
+
+          <div class="w-full max-w-[320px] pt-1 flex flex-col items-center gap-1">
+            <a href="{{ url_for('dashboard.feed') }}"
+               class="w-full rounded-full px-4 py-2.5 text-center text-sm font-semibold {{ 'text-primary-700 bg-primary-50' if request.endpoint == 'dashboard.feed' and request.args.get('filter') != 'reel' else 'text-slate-800 hover:bg-slate-50' }} transition">
+              {{ _('Feed') }}
+            </a>
+            <a href="{{ url_for('dashboard.feed', filter='reel') }}"
+               class="w-full rounded-full px-4 py-2.5 text-center text-sm font-semibold {{ 'text-primary-700 bg-primary-50' if request.endpoint == 'dashboard.feed' and request.args.get('filter') == 'reel' else 'text-slate-800 hover:bg-slate-50' }} transition">
+              {{ _('Micro-learning') }}
+            </a>
+            <a href="{{ url_for('library.index') }}"
+               class="w-full rounded-full px-4 py-2.5 text-center text-sm font-semibold {{ 'text-primary-700 bg-primary-50' if request.blueprint == 'library' else 'text-slate-800 hover:bg-slate-50' }} transition">
+              {{ _('Library') }}
+            </a>
+            <a href="{{ url_for('messages.inbox') }}"
+               class="w-full rounded-full px-4 py-2.5 text-center text-sm font-semibold {{ 'text-primary-700 bg-primary-50' if request.blueprint == 'messages' else 'text-slate-800 hover:bg-slate-50' }} transition">
+              {{ _('Messages') }}
+            </a>
+            <a href="{{ url_for('notifications.index') }}"
+               class="w-full rounded-full px-4 py-2.5 text-center text-sm font-semibold {{ 'text-primary-700 bg-primary-50' if request.blueprint == 'notifications' else 'text-slate-800 hover:bg-slate-50' }} transition">
+              {{ _('Notifications') }}{% if notif_count > 0 %} ({{ notif_count }}){% endif %}
+            </a>
+            <a href="{{ url_for('ai.chat_ui') }}"
+               class="w-full rounded-full px-4 py-2.5 text-center text-sm font-semibold {{ 'text-primary-700 bg-primary-50' if request.blueprint == 'ai' else 'text-slate-800 hover:bg-slate-50' }} transition">
+              {{ _('AI Coach') }}
+            </a>
+            <a href="{{ url_for('profile.edit') }}"
+               class="w-full rounded-full px-4 py-2.5 text-center text-sm font-semibold {{ 'text-primary-700 bg-primary-50' if request.endpoint == 'profile.edit' else 'text-slate-800 hover:bg-slate-50' }} transition">
+              {{ _('Edit Profile') }}
+            </a>
+            {% if u['role'] == 'admin' %}
+            <a href="{{ url_for('admin.dashboard') }}"
+               class="w-full rounded-full px-4 py-2.5 text-center text-sm font-semibold {{ 'text-primary-700 bg-primary-50' if request.blueprint == 'admin' else 'text-slate-800 hover:bg-slate-50' }} transition">
+              {{ _('Admin') }}
+            </a>
+            {% endif %}
           </div>
         </div>
-      </div>
-
-      {# Navigation (same items/visual style as desktop sidebar) #}
-      <nav class="p-4 flex-1">
-        <p class="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2 px-2">{{ _('Main') }}</p>
-        <a href="{{ url_for('dashboard.feed') }}"
-           class="sidebar-link {{ 'active' if request.endpoint == 'dashboard.feed' }}">
-          <iconify-icon icon="solar:home-2-bold-duotone" class="text-xl text-wh-600"></iconify-icon> {{ _('Feed') }}
-        </a>
-        <a href="{{ url_for('courses.index') }}"
-           class="sidebar-link {{ 'active' if request.blueprint == 'courses' }}">
-          <iconify-icon icon="solar:book-2-bold-duotone" class="text-xl text-green-600"></iconify-icon> {{ _('My Courses') }}
-        </a>
-        <a href="{{ url_for('library.index') }}"
-           class="sidebar-link {{ 'active' if request.blueprint == 'library' }}">
-          <iconify-icon icon="solar:library-bold-duotone" class="text-xl text-indigo-600"></iconify-icon> {{ _('Library') }}
-        </a>
-        <a href="{{ url_for('messages.inbox') }}"
-           class="sidebar-link {{ 'active' if request.blueprint == 'messages' }}">
-          <iconify-icon icon="solar:chat-round-bold-duotone" class="text-xl text-purple-500"></iconify-icon>
-          {{ _('Messages') }}
-        </a>
-        <a href="{{ url_for('notifications.index') }}"
-           class="sidebar-link {{ 'active' if request.blueprint == 'notifications' }}">
-          <iconify-icon icon="solar:bell-bold-duotone" class="text-xl text-rose-500"></iconify-icon>
-          {{ _('Notifications') }}
-          {% if notif_count > 0 %}
-            <span class="ms-auto bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">{{ notif_count }}</span>
-          {% endif %}
-        </a>
-        <a href="{{ url_for('ai.chat_ui') }}"
-           class="sidebar-link {{ 'active' if request.blueprint == 'ai' }}">
-          <iconify-icon icon="solar:robot-bold-duotone" class="text-xl text-amber-500"></iconify-icon>
-          {{ _('AI Coach') }}
-          <span class="ms-auto text-xs bg-amber-100 text-amber-700 font-semibold px-2 py-0.5 rounded-full">Beta</span>
-        </a>
-        <a href="{{ url_for('dashboard.feed', filter='reel') }}"
-           class="sidebar-link {{ 'active' if request.endpoint == 'dashboard.feed' and request.args.get('filter') == 'reel' }}">
-          <iconify-icon icon="solar:play-circle-bold-duotone" class="text-xl text-pink-500"></iconify-icon>
-          {{ _('Micro-learning') }}
-        </a>
-
-        <p class="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2 px-2 mt-4">{{ _('Community') }}</p>
-        <a href="{{ url_for('profile.view', username=u['username']) }}"
-           class="sidebar-link {{ 'active' if request.blueprint == 'profile' }}">
-          <iconify-icon icon="solar:user-circle-bold-duotone" class="text-xl text-slate-500"></iconify-icon> {{ _('My Profile') }}
-        </a>
-        {% if u['role'] == 'admin' %}
-        <a href="{{ url_for('admin.dashboard') }}"
-           class="sidebar-link {{ 'active' if request.blueprint == 'admin' }}">
-          <iconify-icon icon="solar:shield-check-bold-duotone" class="text-xl text-red-500"></iconify-icon> {{ _('Admin') }}
-        </a>
-        {% endif %}
-
       </nav>
 
-      <div class="p-4 border-t border-slate-100 flex flex-col gap-1">
+      <div class="p-5 border-t border-slate-100 flex flex-col items-center">
         <a href="{{ url_for('auth.logout') }}"
-           class="flex items-center gap-3 px-3 py-2.5 text-slate-500 hover:text-red-600 text-sm rounded-lg hover:bg-red-50 transition">
-          <iconify-icon icon="solar:logout-2-bold-duotone" class="text-xl flip-rtl"></iconify-icon> {{ _('Sign Out') }}
+           class="w-full max-w-[320px] rounded-full px-4 py-2.5 text-center text-sm font-semibold text-red-600 hover:bg-red-50 transition">
+          {{ _('Sign Out') }}
         </a>
       </div>
     </div>

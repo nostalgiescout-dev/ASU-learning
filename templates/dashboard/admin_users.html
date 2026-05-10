@@ -1,3 +1,4 @@
+git add templates/base.html templates/dashboard/admin.html templates/dashboard/admin_users.html
 {% extends 'base.html' %}
 {% block title %}Admin Users{% endblock %}
 {% block content %}
@@ -21,7 +22,6 @@
             <tr>
               <th class="px-4 py-3 text-left">User</th>
               <th class="px-4 py-3 text-left">Role</th>
-              <th class="px-4 py-3 text-left">XP</th>
               <th class="px-4 py-3 text-left">Status</th>
             </tr>
           </thead>
@@ -33,7 +33,6 @@
                 <div class="text-xs text-slate-500">{{ user.email }}</div>
               </td>
               <td class="px-4 py-3 text-slate-600">{{ user.role }}</td>
-              <td class="px-4 py-3 text-slate-600">{{ user.level_points }}</td>
               <td class="px-4 py-3">
                 <span class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold {{ 'bg-green-100 text-green-700' if user.is_active else 'bg-red-100 text-red-700' }}">
                   {{ 'Active' if user.is_active else 'Disabled' }}
@@ -42,7 +41,7 @@
             </tr>
             {% else %}
             <tr>
-              <td colspan="4" class="px-4 py-6 text-center text-slate-500">No users found.</td>
+              <td colspan="3" class="px-4 py-6 text-center text-slate-500">No users found.</td>
             </tr>
             {% endfor %}
           </tbody>
