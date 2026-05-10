@@ -131,6 +131,12 @@ CREATE TABLE IF NOT EXISTS ai_conversations (
     updated_at          TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+CREATE TABLE IF NOT EXISTS app_settings (
+    key                 TEXT PRIMARY KEY,
+    value               TEXT NOT NULL DEFAULT '',
+    updated_at          TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE INDEX IF NOT EXISTS idx_messages_thread_id ON messages(thread_id);
 CREATE INDEX IF NOT EXISTS idx_messages_sender_id ON messages(sender_id);
 CREATE INDEX IF NOT EXISTS idx_messages_receiver_id ON messages(receiver_id);

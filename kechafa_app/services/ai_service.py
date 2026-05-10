@@ -234,11 +234,29 @@ class AIService:
             normalized = self._normalize_openrouter_key(user_api_key)
             if normalized:
                 keys.append(normalized)
+        db_key = self._normalize_openrouter_key(self._get_app_setting("openrouter_api_key"))
+        if db_key and db_key not in keys:
+            keys.append(db_key)
         for key in [self.openrouter_api_key, self.openrouter_fallback_api_key]:
             normalized = self._normalize_openrouter_key(key)
             if normalized and normalized not in keys:
                 keys.append(normalized)
         return keys
+
+    def _get_app_setting(self, key: str) -> str:
+        try:
+            row = self.base_repo.fetchone(
+                "SELECT value FROM app_settings WHERE key=?",
+                (key,),
+            )
+        except Exception:
+            return ""
+        if not row:
+            return ""
+        return (row.get("value") or "").strip()
+
+    def has_global_openrouter_key(self) -> bool:
+        return bool(self._normalize_openrouter_key(self._get_app_setting("openrouter_api_key")))
 
     def _openrouter_reply(self, user: dict[str, Any], history: list[dict[str, Any]], user_api_key: str = "") -> dict[str, str | None]:
         name = user.get("full_name") or user.get("username") or "Scout"

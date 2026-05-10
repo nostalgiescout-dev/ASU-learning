@@ -324,6 +324,12 @@ def init_db():
             updated_at      TEXT DEFAULT (datetime('now'))
         );
 
+        CREATE TABLE IF NOT EXISTS app_settings (
+            key         TEXT PRIMARY KEY,
+            value       TEXT NOT NULL DEFAULT '',
+            updated_at  TEXT DEFAULT (datetime('now'))
+        );
+
         CREATE TABLE IF NOT EXISTS notifications (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id     INTEGER NOT NULL REFERENCES users(id),

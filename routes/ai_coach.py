@@ -36,7 +36,7 @@ def chat_ui():
     active_conversation_id = active_conversation["id"] if active_conversation else None
     history = ai_service.get_history(uid, active_conversation_id)
 
-    user_key = session.get("admin_openrouter_key", "")
+    user_key = ""
     return render_template(
         "messages/ai_chat.html",
         history=history,
@@ -44,7 +44,7 @@ def chat_ui():
         conversation_id=active_conversation_id,
         conversation_title=ai_service.get_display_title(uid, active_conversation_id),
         conversations=ai_service.list_conversations(uid),
-        has_admin_api_key=bool(user_key),
+        has_admin_api_key=ai_service.has_global_openrouter_key(),
     )
 
 
@@ -58,8 +58,7 @@ def send_message():
         return jsonify({"error": "Empty message"}), 400
 
     conversation_id = _parse_conversation_id(payload.get("conversation_id"))
-    user_key = session.get("admin_openrouter_key", "")
-    result = ai_service.reply(uid, user_input, conversation_id, user_api_key=user_key)
+    result = ai_service.reply(uid, user_input, conversation_id, user_api_key="")
     if not result["ok"]:
         return (
             jsonify(
@@ -132,15 +131,20 @@ def set_api_key():
     payload = request.json or {}
     api_key = (payload.get("api_key") or "").strip()
     if api_key:
-        session["admin_openrouter_key"] = api_key
+        ai_service.base_repo.execute(
+            "INSERT OR REPLACE INTO app_settings (key, value, updated_at) VALUES (?, ?, datetime('now'))",
+            ("openrouter_api_key", api_key),
+        )
     else:
-        session.pop("admin_openrouter_key", None)
-    session.modified = True
-    user_key = session.get("admin_openrouter_key", "")
-    status = ai_service.provider_status(user_api_key=user_key)
+        ai_service.base_repo.execute(
+            "DELETE FROM app_settings WHERE key=?",
+            ("openrouter_api_key",),
+        )
+    has_key = ai_service.has_global_openrouter_key()
+    status = ai_service.provider_status(user_api_key="")
     return jsonify({
         "status": "saved",
-        "has_key": bool(user_key),
+        "has_key": has_key,
         "provider_label": status["label"],
         "is_live": status["is_live"],
         "provider_reason": status["reason"],
@@ -158,13 +162,12 @@ def edit_message():
     except (TypeError, ValueError):
         return jsonify({"error": "Invalid message index."}), 400
 
-    user_key = session.get("admin_openrouter_key", "")
     result = ai_service.edit_user_message(
         session["user_id"],
         conversation_id,
         message_index,
         payload.get("message", ""),
-        user_api_key=user_key,
+        user_api_key="",
     )
     if not result["ok"]:
         return jsonify({"error": result["reason"]}), 400

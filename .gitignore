@@ -23,8 +23,10 @@ venv_broken_backup/
 gmail_token.json
 gmail_credentials.json
 *.db
+kechafa.db
 .venv/
 __pycache__/
 *.pyc
 local-certs/
 static/uploads/
+

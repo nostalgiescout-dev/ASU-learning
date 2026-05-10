@@ -17,6 +17,8 @@ TRANSLATIONS = {
     "en": {
         "Main": "Main",
         "Community": "Community",
+        "Menu": "Menu",
+        "Close": "Close",
         "Feed": "Feed",
         "My Courses": "My Courses",
         "Messages": "Messages",
@@ -78,6 +80,8 @@ TRANSLATIONS = {
     "ar": {
         "Main": "الرئيسية",
         "Community": "المجتمع",
+        "Menu": "القائمة",
+        "Close": "إغلاق",
         "Feed": "الموجز",
         "My Courses": "دوراتي",
         "Messages": "الرسائل",
@@ -139,6 +143,8 @@ TRANSLATIONS = {
     "fr": {
         "Main": "Principal",
         "Community": "Communauté",
+        "Menu": "Menu",
+        "Close": "Fermer",
         "Feed": "Fil d'actualité",
         "My Courses": "Mes cours",
         "Messages": "Messages",
@@ -200,6 +206,8 @@ TRANSLATIONS = {
     "es": {
         "Main": "Principal",
         "Community": "Comunidad",
+        "Menu": "Menú",
+        "Close": "Cerrar",
         "Feed": "Inicio",
         "My Courses": "Mis cursos",
         "Messages": "Mensajes",

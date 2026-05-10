@@ -580,6 +580,81 @@ def add_post_comment(post_id):
     return _feed_redirect(feed_filter, page, post_id)
 
 
+@dashboard_bp.route(
+    "/feed/posts/<int:post_id>/comment/<int:comment_id>/delete",
+    methods=["POST"],
+)
+@login_required
+def delete_post_comment(post_id: int, comment_id: int):
+    feed_filter = request.form.get("feed_filter", "all")
+    page = max(1, request.form.get("page", 1, type=int))
+
+    if not _post_exists(post_id):
+        flash("Post not found.", "danger")
+        return _feed_redirect(feed_filter, page)
+
+    comment = fetchone(
+        "SELECT id, post_id, author_id FROM post_comments WHERE id=? AND post_id=?",
+        (comment_id, post_id),
+    )
+    if not comment:
+        flash("Comment not found.", "danger")
+        return _feed_redirect(feed_filter, page, post_id)
+
+    user = _current_user()
+    if not user:
+        flash("Please sign in to continue.", "danger")
+        return redirect(url_for("auth.login"))
+
+    if comment["author_id"] != user["id"] and not is_admin_like_user(user):
+        flash("Insufficient permissions.", "danger")
+        return _feed_redirect(feed_filter, page, post_id)
+
+    execute("DELETE FROM post_comments WHERE id=?", (comment_id,))
+    flash("Comment removed.", "success")
+    return _feed_redirect(feed_filter, page, post_id)
+
+
+@dashboard_bp.route(
+    "/feed/posts/<int:post_id>/comment/<int:comment_id>/update",
+    methods=["POST"],
+)
+@login_required
+def update_post_comment(post_id: int, comment_id: int):
+    feed_filter = request.form.get("feed_filter", "all")
+    page = max(1, request.form.get("page", 1, type=int))
+    body = request.form.get("body", "").strip()
+
+    if not _post_exists(post_id):
+        flash("Post not found.", "danger")
+        return _feed_redirect(feed_filter, page)
+
+    comment = fetchone(
+        "SELECT id, post_id, author_id FROM post_comments WHERE id=? AND post_id=?",
+        (comment_id, post_id),
+    )
+    if not comment:
+        flash("Comment not found.", "danger")
+        return _feed_redirect(feed_filter, page, post_id)
+
+    user = _current_user()
+    if not user:
+        flash("Please sign in to continue.", "danger")
+        return redirect(url_for("auth.login"))
+
+    if comment["author_id"] != user["id"] and not is_admin_like_user(user):
+        flash("Insufficient permissions.", "danger")
+        return _feed_redirect(feed_filter, page, post_id)
+
+    if not body:
+        flash("Write a comment before saving.", "warning")
+        return _feed_redirect(feed_filter, page, post_id)
+
+    execute("UPDATE post_comments SET body=? WHERE id=?", (body, comment_id))
+    flash("Comment updated.", "success")
+    return _feed_redirect(feed_filter, page, post_id)
+
+
 @dashboard_bp.route("/feed/friends/request/<int:user_id>", methods=["POST"])
 @login_required
 def send_friend_request(user_id):
