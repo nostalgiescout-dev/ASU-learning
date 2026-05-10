@@ -184,15 +184,47 @@
         <div class="font-display font-extrabold text-slate-900 text-sm leading-tight">{{ _('Only Scouts Academy') }}</div>
       </a>
 
-      <button type="button"
-              class="relative inline-flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-700"
-              data-mobile-menu-open aria-haspopup="dialog" aria-controls="mobile-menu-overlay" aria-expanded="false"
-              style="-webkit-tap-highlight-color:transparent;">
-        {% if notif_count > 0 %}
-        <span class="absolute -top-1 -right-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">{{ notif_count }}</span>
-        {% endif %}
-        <iconify-icon icon="solar:hamburger-menu-bold" class="text-[22px]"></iconify-icon>
-      </button>
+      <div class="flex items-center gap-2">
+        <a href="{{ url_for('notifications.index') }}"
+           class="relative inline-flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-700"
+           aria-label="{{ _('Notifications') }}" style="-webkit-tap-highlight-color:transparent;">
+          {% if notif_count > 0 %}
+          <span class="absolute -top-1 -end-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">{{ notif_count }}</span>
+          {% endif %}
+          <iconify-icon icon="solar:bell-bold-duotone" class="text-[22px]"></iconify-icon>
+        </a>
+
+        <div class="relative">
+          <button type="button" id="mobile-top-lang-btn"
+                  class="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl bg-slate-100 px-3 text-slate-700"
+                  aria-haspopup="menu" aria-expanded="false"
+                  style="-webkit-tap-highlight-color:transparent;">
+            <iconify-icon icon="solar:global-bold-duotone" class="text-[20px]"></iconify-icon>
+            <span class="text-xs font-bold uppercase tracking-wide">{{ current_locale }}</span>
+            <iconify-icon icon="solar:alt-arrow-down-linear" class="text-[16px] opacity-70"></iconify-icon>
+          </button>
+          <div id="mobile-top-lang-panel"
+               class="absolute end-0 top-12 z-50 hidden w-44 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-xl">
+            {% for code, label, flag in [('ar','العربية','🇲🇦'),('en','English','🇬🇧'),('fr','Français','🇫🇷'),('es','Español','🇪🇸')] %}
+            <a href="{{ url_for('auth.set_language', lang=code) }}"
+               class="flex items-center gap-3 px-4 py-2.5 text-sm transition hover:bg-slate-50 {{ 'font-bold text-primary-600 bg-primary-50' if current_locale == code else 'text-slate-700' }}">
+              <span>{{ flag }}</span>
+              <span>{{ label }}</span>
+              {% if current_locale == code %}
+              <iconify-icon icon="solar:check-circle-bold-duotone" class="ms-auto text-primary-600"></iconify-icon>
+              {% endif %}
+            </a>
+            {% endfor %}
+          </div>
+        </div>
+
+        <button type="button"
+                class="relative inline-flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-700"
+                data-mobile-menu-open aria-haspopup="dialog" aria-controls="mobile-menu-overlay" aria-expanded="false"
+                style="-webkit-tap-highlight-color:transparent;">
+          <iconify-icon icon="solar:hamburger-menu-bold" class="text-[22px]"></iconify-icon>
+        </button>
+      </div>
     </div>
   </header>
 
@@ -514,6 +546,42 @@ document.addEventListener('DOMContentLoaded', () => {
   })();
 </script>
 
+<script>
+  (function () {
+    const btn = document.getElementById('mobile-top-lang-btn');
+    const panel = document.getElementById('mobile-top-lang-panel');
+    if (!btn || !panel) return;
+
+    function closePanel() {
+      panel.classList.add('hidden');
+      btn.setAttribute('aria-expanded', 'false');
+    }
+
+    function openPanel() {
+      panel.classList.remove('hidden');
+      btn.setAttribute('aria-expanded', 'true');
+    }
+
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (panel.classList.contains('hidden')) openPanel();
+      else closePanel();
+    });
+
+    document.addEventListener('click', (e) => {
+      if (panel.classList.contains('hidden')) return;
+      if (btn.contains(e.target) || panel.contains(e.target)) return;
+      closePanel();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (panel.classList.contains('hidden')) return;
+      if (e.key === 'Escape') closePanel();
+    });
+  })();
+</script>
+ 
 {% endif %}{# end if current_user #}
 
 <script>
